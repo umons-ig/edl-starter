@@ -1,42 +1,42 @@
-# 🎓 EDL Workshop 1: Modern Python Testing & CI/CD
+# 🎓 EDL Atelier 1 : Tests Modernes en Python & CI/CD
 
-**Workshop Duration:** 3 hours
-**Level:** Beginner to Intermediate
-**Technologies:** Python, FastAPI, pytest, UV, GitHub Actions
+**Durée de l'atelier :** 3 heures
+**Niveau :** Débutant à Intermédiaire
+**Technologies :** Python, FastAPI, pytest, UV, GitHub Actions
 
-## 🎯 Learning Objectives
+## 🎯 Objectifs d'Apprentissage
 
-By the end of this workshop, you will:
+À la fin de cet atelier, vous saurez :
 
-1. ✅ Use **UV** for modern Python dependency management
-2. ✅ Write **unit tests** with pytest
-3. ✅ Understand **test fixtures** and test structure
-4. ✅ Configure **test coverage** reporting
-5. ✅ Set up **GitHub Actions** for automated testing (CI/CD)
-6. ✅ Practice **Test-Driven Development** (TDD) principles
+1. ✅ Utiliser **UV** pour la gestion moderne des dépendances Python
+2. ✅ Écrire des **tests unitaires** avec pytest
+3. ✅ Comprendre les **fixtures de test** et la structure des tests
+4. ✅ Configurer le **reporting de couverture** de code
+5. ✅ Mettre en place **GitHub Actions** pour les tests automatisés (CI/CD)
+6. ✅ Pratiquer les principes du **Test-Driven Development** (TDD)
 
-## 📋 Prerequisites
+## 📋 Prérequis
 
-Before starting, ensure you have:
+Avant de commencer, assurez-vous d'avoir :
 
-- [ ] **Git** installed
-- [ ] **Python 3.11+** installed (`python --version`)
-- [ ] **GitHub account** created
-- [ ] **Code editor** (VS Code recommended)
-- [ ] **Terminal/Command line** familiarity
+- [ ] **Git** installé
+- [ ] **Python 3.11+** installé (`python --version`)
+- [ ] Un **compte GitHub** créé
+- [ ] Un **éditeur de code** (VS Code recommandé)
+- [ ] Une familiarité avec le **terminal/ligne de commande**
 
-## 🚀 Quick Start
+## 🚀 Démarrage Rapide
 
-### Step 1: Fork & Clone
+### Étape 1 : Fork & Clone
 
-1. **Fork this repository** on GitHub (click "Fork" button)
-2. **Clone your fork:**
+1. **Forkez ce dépôt** sur GitHub (cliquez sur le bouton "Fork")
+2. **Clonez votre fork :**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/edl-starter
+   git clone https://github.com/VOTRE_NOM_UTILISATEUR/edl-starter
    cd edl-starter
    ```
 
-### Step 2: Install UV
+### Étape 2 : Installer UV
 
 ```bash
 # macOS/Linux
@@ -46,107 +46,107 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Verify installation:
+Vérifier l'installation :
 ```bash
 uv --version
 ```
 
-### Step 3: Setup Environment
+### Étape 3 : Configurer l'Environnement
 
 ```bash
 cd backend
 uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Sur Windows: .venv\Scripts\activate
 uv sync
 ```
 
-### Step 4: Run the Application
+### Étape 4 : Lancer l'Application
 
 ```bash
 uv run uvicorn src.app:app --reload
 ```
 
-Visit:
-- **API:** http://localhost:8000
-- **Docs:** http://localhost:8000/docs
-- **Health:** http://localhost:8000/health
+Visitez :
+- **API :** http://localhost:8000
+- **Documentation :** http://localhost:8000/docs
+- **Santé :** http://localhost:8000/health
 
-### Step 5: Run Tests
+### Étape 5 : Lancer les Tests
 
 ```bash
 uv run pytest -v
 ```
 
-## 📚 Workshop Structure
+## 📚 Structure de l'Atelier
 
-Follow the detailed guide in [docs/WORKSHOP.md](docs/WORKSHOP.md) for step-by-step instructions.
+Suivez le guide détaillé dans [docs/WORKSHOP.md](docs/WORKSHOP.md) pour les instructions pas à pas.
 
-| Phase | Topic | Time |
-|-------|-------|------|
-| 1 | Fork & Setup | 15 min |
-| 2 | UV & Dependencies | 15 min |
-| 3 | Explore the App | 15 min |
-| 4 | Understand Tests | 20 min |
-| 5 | Write New Tests | 45 min |
-| 6 | Test Coverage | 15 min |
+| Phase | Sujet | Durée |
+|-------|-------|-------|
+| 1 | Fork & Configuration | 15 min |
+| 2 | UV & Dépendances | 15 min |
+| 3 | Explorer l'Application | 15 min |
+| 4 | Comprendre les Tests | 20 min |
+| 5 | Écrire de Nouveaux Tests | 45 min |
+| 6 | Couverture de Code | 15 min |
 | 7 | GitHub Actions | 40 min |
-| 8 | Verification | 15 min |
+| 8 | Vérification | 15 min |
 
-## 🏗️ Project Structure
+## 🏗️ Structure du Projet
 
 ```
 edl-starter/
 ├── backend/
 │   ├── src/
 │   │   ├── __init__.py
-│   │   └── app.py              # ✅ Complete FastAPI application
+│   │   └── app.py              # ✅ Application FastAPI complète
 │   ├── tests/
 │   │   ├── __init__.py
-│   │   ├── conftest.py         # ✅ Test fixtures
-│   │   └── test_api.py         # ⚠️  15 tests (add 5-10 more!)
-│   ├── pyproject.toml          # ✅ Complete configuration
+│   │   ├── conftest.py         # ✅ Fixtures de test
+│   │   └── test_api.py         # ⚠️  15 tests (ajoutez-en 5-10 de plus !)
+│   ├── pyproject.toml          # ✅ Configuration complète
 │   └── README.md
 ├── .github/
 │   └── workflows/
-│       └── .gitkeep            # ⚠️  Create test.yml here
+│       └── .gitkeep            # ⚠️  Créez test.yml ici
 ├── docs/
-│   ├── WORKSHOP.md             # 📚 Detailed instructions
-│   ├── SOLUTIONS.md            # 🔒 Solutions (for instructors)
-│   └── TROUBLESHOOTING.md      # 🛠️  Common issues
+│   ├── WORKSHOP.md             # 📚 Instructions détaillées
+│   ├── SOLUTIONS.md            # 🔒 Solutions (pour les instructeurs)
+│   └── TROUBLESHOOTING.md      # 🛠️  Problèmes courants
 ├── .gitignore
-└── README.md                   # 👈 You are here
+└── README.md                   # 👈 Vous êtes ici
 ```
 
-## ✅ Completion Checklist
+## ✅ Liste de Vérification d'Achèvement
 
-By the end of the workshop, you should have:
+À la fin de l'atelier, vous devriez avoir :
 
-- [ ] UV installed and working
-- [ ] All dependencies installed with `uv sync`
-- [ ] Application running locally
-- [ ] All original tests passing
-- [ ] 5-10 new tests written
-- [ ] Test coverage > 85%
-- [ ] GitHub Actions workflow created
-- [ ] Tests passing on GitHub (green checkmark ✅)
+- [ ] UV installé et fonctionnel
+- [ ] Toutes les dépendances installées avec `uv sync`
+- [ ] L'application qui fonctionne localement
+- [ ] Tous les tests originaux qui passent
+- [ ] 5-10 nouveaux tests écrits
+- [ ] Une couverture de tests > 85%
+- [ ] Un workflow GitHub Actions créé
+- [ ] Les tests qui passent sur GitHub (coche verte ✅)
 
-## 📖 Additional Resources
+## 📖 Ressources Supplémentaires
 
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [pytest Documentation](https://docs.pytest.org/)
-- [UV Documentation](https://docs.astral.sh/uv/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [Documentation FastAPI](https://fastapi.tiangolo.com/)
+- [Documentation pytest](https://docs.pytest.org/)
+- [Documentation UV](https://docs.astral.sh/uv/)
+- [Documentation GitHub Actions](https://docs.github.com/fr/actions)
 
-## 🆘 Getting Help
+## 🆘 Besoin d'Aide
 
-- **During workshop:** Ask your instructor
-- **Issues:** Check [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
-- **Questions:** Open an issue on GitHub
+- **Pendant l'atelier :** Demandez à votre instructeur
+- **Problèmes :** Consultez [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- **Questions :** Ouvrez une issue sur GitHub
 
-## 📝 License
+## 📝 Licence
 
-This workshop material is provided for educational purposes.
+Ce matériel d'atelier est fourni à des fins éducatives.
 
 ---
 
-**Ready to start? Head to [docs/WORKSHOP.md](docs/WORKSHOP.md) for detailed instructions!** 🚀
+**Prêt à commencer ? Rendez-vous sur [docs/WORKSHOP.md](docs/WORKSHOP.md) pour les instructions détaillées !** 🚀
