@@ -61,6 +61,7 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
 ---
 
 **Dans le reste de l'atelier :**
@@ -412,7 +413,7 @@ start htmlcov/index.html  # Windows
 
 ## Phase 6 : Tests Frontend
 
-### Étape 6.1 : Comprendre le Frontend
+### Étape 6.1 : Comprendre le Frontend et Pourquoi Tester
 
 Le frontend est une application **React + TypeScript** simple qui communique avec le backend.
 
@@ -431,6 +432,235 @@ frontend/
 │       └── TaskForm.tsx
 └── package.json
 ```
+
+#### 🤔 Pourquoi Tester le Frontend ?
+
+**1. Vérifier la Communication avec le Backend**
+
+Les tests frontend vérifient que votre code JavaScript/TypeScript communique correctement avec l'API backend :
+
+- ✅ Les requêtes HTTP sont-elles correctement formées ? (bonne URL, bonne méthode, bon format)
+- ✅ Les données sont-elles correctement envoyées ? (body JSON valide)
+- ✅ Les réponses sont-elles correctement traitées ? (parsing JSON, extraction des données)
+- ✅ Les erreurs sont-elles gérées ? (404, 500, network errors)
+
+**2. Tester Sans Dépendre du Backend**
+
+Grâce au **mocking**, on peut tester le frontend même si :
+
+- ❌ Le backend n'est pas encore développé
+- ❌ Le backend est en panne
+- ❌ On n'a pas de connexion Internet
+- ❌ On veut tester des cas d'erreur difficiles à reproduire
+
+**Exemple :** Comment tester une erreur 500 sans crasher votre vrai backend ? → Avec un mock !
+
+**3. Tests Rapides et Fiables**
+
+- ⚡ **Rapides** : Pas besoin de lancer un vrai serveur
+- 🔒 **Isolés** : Pas d'effets de bord entre les tests
+- 🎯 **Précis** : On teste uniquement la logique frontend
+
+#### 📦 Qu'est-ce qu'on Teste ?
+
+Dans cet atelier, on teste **uniquement le module API** (`api.ts`), pas les composants React.
+
+**Pourquoi ne pas tester les composants React ?**
+
+- Les tests de composants React nécessitent des outils supplémentaires (React Testing Library)
+- C'est plus complexe (gestion du DOM, événements, état)
+- Pour l'Atelier 1, on se concentre sur les **concepts de base des tests**
+
+**Ce qu'on teste dans `api.ts` :**
+
+| Fonction | Ce qu'elle fait | Ce qu'on vérifie |
+|----------|-----------------|------------------|
+| `getTasks()` | Récupère la liste des tâches | Retourne un tableau de tâches |
+| `createTask()` | Crée une nouvelle tâche | Envoie les bonnes données en POST |
+| `deleteTask()` | Supprime une tâche | Appelle DELETE avec le bon ID |
+| `updateTask()` | Met à jour une tâche | Envoie PUT avec les modifications |
+
+#### 🎭 Le Concept de Mocking
+
+**Problème :** Comment tester du code qui appelle une API externe ?
+
+**Solution :** On **simule** (mock) la fonction `fetch()` pour qu'elle retourne ce qu'on veut !
+
+```typescript
+// Au lieu d'appeler le vrai backend...
+fetch('http://localhost:8000/tasks')
+
+// ...on remplace fetch par une fausse version qui retourne ce qu'on veut
+(globalThis as any).fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([{ id: 1, title: 'Test' }])
+  })
+);
+```
+
+**Avantages :**
+
+- ✅ Pas besoin du vrai backend
+- ✅ Contrôle total sur les réponses (succès, erreurs, cas limites)
+- ✅ Tests ultra-rapides
+
+#### 🔬 Décorticage Ligne par Ligne du Mock
+
+Analysons en détail ce code de mocking qui peut sembler complexe au premier abord :
+
+```typescript
+(globalThis as any).fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([
+      { id: 1, title: 'Test Task', status: 'todo' }
+    ]),
+  })
+);
+```
+
+**Ligne 1 : Remplacer la vraie fonction `fetch()`**
+
+```typescript
+(globalThis as any).fetch = vi.fn(...)
+```
+
+| Élément | Explication |
+|---------|-------------|
+| `globalThis` | Objet JavaScript global (équivalent de `window` dans le navigateur) |
+| `.fetch` | La vraie fonction qui fait les requêtes HTTP |
+| `vi.fn(...)` | Crée une fonction "espion" (mock) de Vitest |
+| `(globalThis as any)` | TypeScript : on force le type pour pouvoir modifier fetch |
+
+**Ce qu'on fait :** On remplace la vraie `fetch()` par une fausse version qu'on contrôle !
+
+**Ligne 2 : Simuler une Promesse réussie**
+
+```typescript
+Promise.resolve({...})
+```
+
+- `fetch()` retourne toujours une **Promise** (asynchrone)
+- `Promise.resolve()` simule une promesse qui **réussit immédiatement**
+- On pourrait utiliser `Promise.reject()` pour simuler une erreur réseau
+
+**Ligne 3-7 : Simuler la réponse HTTP**
+
+```typescript
+{
+  ok: true,                    // ✅ Statut de la réponse
+  json: () => Promise.resolve([...])  // 📦 Les données JSON
+}
+```
+
+| Propriété | Valeur | Signification |
+|-----------|--------|---------------|
+| `ok` | `true` | La requête HTTP a réussi (status 200-299) |
+| `ok` | `false` | La requête a échoué (status 400-599) |
+| `json()` | Une fonction qui retourne une Promise | Simule `response.json()` |
+
+**Pourquoi `json()` est une fonction ?**
+
+Le vrai `fetch()` fonctionne comme ça :
+
+```typescript
+const response = await fetch('/tasks');  // Étape 1 : Obtenir la réponse
+const data = await response.json();      // Étape 2 : Parser le JSON
+```
+
+Notre mock doit **imiter exactement ce comportement** !
+
+**Ligne 4-6 : Les données retournées**
+
+```typescript
+[
+  { id: 1, title: 'Test Task', status: 'todo' }
+]
+```
+
+C'est le **tableau de tâches fictif** que notre mock va retourner. On peut mettre ce qu'on veut !
+
+#### 🎨 Exemples de Mocks pour Différents Cas
+
+**1️⃣ Mock pour un Succès (200 OK)**
+
+```typescript
+(globalThis as any).fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ id: 1, title: 'Ma tâche' })
+  })
+);
+```
+
+**2️⃣ Mock pour une Erreur 404 (Not Found)**
+
+```typescript
+(globalThis as any).fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: false,
+    status: 404,
+    statusText: 'Not Found'
+  })
+);
+```
+
+**3️⃣ Mock pour une Erreur 500 (Server Error)**
+
+```typescript
+(globalThis as any).fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: false,
+    status: 500,
+    statusText: 'Server Error'
+  })
+);
+```
+
+**4️⃣ Mock pour une Erreur Réseau (pas de connexion)**
+
+```typescript
+(globalThis as any).fetch = vi.fn(() =>
+  Promise.reject(new Error('Network error'))
+);
+```
+
+#### ❓ Questions Fréquentes sur le Mocking
+
+**Q : Pourquoi `(globalThis as any)` ?**
+
+**R :** TypeScript protège `globalThis.fetch` contre les modifications. `as any` dit à TypeScript "Fais-moi confiance, je sais ce que je fais !" C'est normal dans les tests.
+
+**Q : Pourquoi `vi.fn()` au lieu d'une fonction normale ?**
+
+**R :** `vi.fn()` crée un **spy** (espion). On peut ensuite vérifier :
+
+```typescript
+expect(mockFetch).toHaveBeenCalledWith('/tasks/1', { method: 'DELETE' });
+```
+
+Avec une fonction normale, on ne pourrait pas faire ça !
+
+**Q : Dois-je mocker `fetch()` dans chaque test ?**
+
+**R :** **OUI !** Chaque test est isolé. Si vous ne mocker pas `fetch()`, le test essaiera d'appeler le vrai backend et échouera.
+
+**Q : Le mock persiste-t-il entre les tests ?**
+
+**R :** Non, Vitest réinitialise les mocks automatiquement entre chaque test. C'est pour garantir l'**isolation** des tests.
+
+#### 🎯 Récapitulatif
+
+| Concept | Signification |
+|---------|---------------|
+| **Mock** | Fausse version d'une fonction qu'on contrôle |
+| `globalThis.fetch` | La vraie fonction HTTP qu'on remplace |
+| `vi.fn()` | Crée un mock espion (peut être vérifié) |
+| `Promise.resolve()` | Simule une promesse qui réussit |
+| `ok: true` | Simule un succès HTTP (200-299) |
+| `json()` | Fonction qui retourne les données JSON |
 
 **Important :** On teste **uniquement l'API** (pas les composants React) pour rester simple.
 
@@ -461,14 +691,14 @@ Test Files  1 passed (1)
      Tests  3 passed (3)
 ```
 
-### Étape 6.4 : Analyser les Tests
+### Étape 6.4 : Analyser les Tests en Détail
 
-Ouvrez `frontend/src/api/api.test.ts` :
+Ouvrez `frontend/src/api/api.test.ts` et analysons **ligne par ligne** comment fonctionne un test :
 
 ```typescript
 describe('API Module', () => {
   it('fetches tasks from the backend', async () => {
-    // Mock fetch pour simuler la réponse
+    // ÉTAPE 1 : Mock fetch pour simuler la réponse du backend
     (globalThis as any).fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
@@ -478,18 +708,84 @@ describe('API Module', () => {
       })
     );
 
+    // ÉTAPE 2 : Appeler la fonction à tester
     const tasks = await api.getTasks();
+
+    // ÉTAPE 3 : Vérifier les résultats
     expect(tasks).toHaveLength(1);
     expect(tasks[0].title).toBe('Test Task');
   });
 });
 ```
 
-**Concepts clés :**
+#### 🔍 Explication Détaillée
 
-- **Mocking** : On simule `fetch()` pour ne pas appeler le vrai backend
-- **async/await** : Tests asynchrones
-- **expect()** : Assertions Vitest (similaire à pytest)
+**ÉTAPE 1 : Pourquoi mocker `fetch()` ?**
+
+```typescript
+(globalThis as any).fetch = vi.fn(() => ...)
+```
+
+- `globalThis.fetch` = la fonction JavaScript qui fait les requêtes HTTP
+- `vi.fn()` = remplace fetch par une fausse version (mock) de Vitest
+- On contrôle ce qu'elle retourne → **pas d'appel réseau réel**
+
+**Ce que le mock retourne :**
+
+```typescript
+Promise.resolve({
+  ok: true,                    // ✅ Requête réussie (pas d'erreur)
+  json: () => Promise.resolve([...])  // Les données JSON à retourner
+})
+```
+
+C'est exactement ce que le **vrai** `fetch()` retournerait, mais **sans réseau** !
+
+**ÉTAPE 2 : Appeler la fonction**
+
+```typescript
+const tasks = await api.getTasks();
+```
+
+- Appelle la vraie fonction `getTasks()` de notre API
+- Cette fonction utilise `fetch()` en interne
+- Mais `fetch()` est maintenant notre **mock** → retourne instantanément les données fictives
+
+**ÉTAPE 3 : Vérifier les résultats**
+
+```typescript
+expect(tasks).toHaveLength(1);       // ✅ On a bien reçu 1 tâche
+expect(tasks[0].title).toBe('Test Task');  // ✅ Le titre est correct
+```
+
+#### 📊 Comparaison Backend vs Frontend
+
+| Aspect | Tests Backend (pytest) | Tests Frontend (Vitest) |
+|--------|------------------------|-------------------------|
+| **Framework** | pytest | Vitest |
+| **Langage** | Python | TypeScript |
+| **Assertions** | `assert response.status_code == 200` | `expect(response.ok).toBe(true)` |
+| **Mocking** | Fixtures (`client`) | `vi.fn()` |
+| **Asynchrone** | Pas nécessaire (FastAPI le gère) | `async/await` obligatoire |
+| **Pattern** | Arrange-Act-Assert | Arrange-Act-Assert (identique!) |
+
+**La bonne nouvelle :** Les concepts sont **identiques** entre backend et frontend !
+
+#### 🎯 Les 5 Tests Expliqués
+
+| Test | Objectif | Ce qu'on vérifie |
+|------|----------|------------------|
+| **Test 1** : `fetches tasks` | Récupérer des tâches | ✅ Reçoit un tableau avec les bonnes données |
+| **Test 2** : `creates a new task` | Créer une tâche | ✅ Envoie POST avec les bonnes données |
+| **Test 3** : `throws error when API fails` | Gestion d'erreur | ✅ Lève une exception si le backend répond 500 |
+| **Test 4** : `deletes a task` | Supprimer une tâche | ✅ Appelle DELETE avec le bon ID |
+| **Test 5** : `updates a task` | Mettre à jour une tâche | ✅ Envoie PUT avec les modifications |
+
+**Pourquoi ces tests sont importants ?**
+
+- 🐛 **Détecter les bugs** : Si on change l'URL de l'API, les tests échouent
+- 🔒 **Garantir la qualité** : Les nouvelles fonctionnalités ne cassent pas l'existant
+- 📖 **Documentation vivante** : Les tests montrent comment utiliser l'API
 
 ### Étape 6.5 : Couverture Frontend
 
@@ -645,64 +941,334 @@ npm run dev
 
 ---
 
-## 🎁 BONUS : Exercices Java
+## 🎁 Exercices Bonus : Java avec JUnit
 
 **Objectif :** Voir que les principes de TDD s'appliquent à tous les langages !
 
 Les exercices Java sont dans le dossier [`java-exercises/`](../java-exercises/).
 
-### Pourquoi Java en Bonus ?
+---
 
-Dans ce cours, on utilise **Python** pour le backend, mais les concepts de tests unitaires sont **universels** :
-
-- Pattern **Arrange-Act-Assert**
-- **Fixtures** (setup/teardown)
-- **Assertions**
-- **Couverture de code**
-
-Les exercices Java vous montrent que ces principes fonctionnent de la même manière dans **tous les langages** !
-
-### Exercices Disponibles
-
-**3 exercices progressifs avec JUnit :**
-
-1. **Calculator** (15 min) - Opérations arithmétiques simples
-2. **StringUtils** (15 min) - Manipulation de chaînes de caractères
-3. **BankAccount** (15 min) - Gestion de compte avec validation
-
-**Chaque exercice contient :**
-
-- ✅ Un test d'exemple (déjà implémenté)
-- ❌ Des tests à compléter (marqués `@Test`)
-- 🎯 Du code à implémenter (marqué `// TODO`)
-
-### Configuration VSCode (5 min)
-
-**Extensions requises :**
-
-1. **Language Support for Java(TM) by Red Hat**
-2. **Extension Pack for Java** (Microsoft)
-
-Installez-les depuis VSCode : `Cmd+Shift+X` → Recherchez "Java"
-
-**Voir le README complet :** [`java-exercises/README.md`](../java-exercises/README.md)
-
-### Commencer les Exercices
+### Prérequis : Installer Java
 
 ```bash
-# 1. Ouvrir le dossier dans VSCode
-cd java-exercises
-code .
-
-# 2. Attendre que VSCode détecte les fichiers Java
-
-# 3. Cliquer sur l'icône ▶️ à côté des tests
+# Vérifier si déjà installé
+java -version    # Devrait afficher Java 17+
 ```
 
-**Alternative (terminal) :**
+**Si pas installé :**
+
+- **macOS :** `brew install openjdk@17`
+- **Linux :** `sudo apt install openjdk-17-jdk`
+- **Windows :** Installer depuis [adoptium.net](https://adoptium.net/)
+
+**Commandes de base :**
+
+Chaque exercice utilise un Makefile pour simplifier la compilation et l'exécution :
 
 ```bash
-cd java-exercises/calculator
-javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
-java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore CalculatorTest
+make test     # Compiler + Exécuter les tests + Nettoyer
+make compile  # Compiler uniquement
+make clean    # Supprimer les fichiers .class
+```
+
+---
+
+### ✍️ Exercice 1 : Calculs Géométriques (Composition de Fonctions)
+
+**🎯 Objectif :** Implémenter des opérations mathématiques en composant des fonctions simples
+
+Ouvrez le dossier `edl-starter/java-exercises/calculs-geo/`
+
+**Fichiers du projet :**
+
+- `Addition.java` : Classe d'exemple déjà implémentée
+- `Produit.java` : À compléter (multiplication)
+- `Surface.java` : À compléter (surface rectangle)
+- `Perimetre.java` : À compléter (périmètre)
+- Tests : `AdditionTest.java`, `ProduitTest.java`, `SurfaceTest.java`, `PerimetreTest.java`
+
+**Votre mission - Partie 1 : Implémenter `Produit.mult()`**
+
+Ouvrez `Produit.java` et complétez la méthode :
+
+```java
+public class Produit {
+    public static int mult(int a, int b) {
+        // TODO: Retourner le produit de a et b
+        return 0;
+    }
+}
+```
+
+**Test correspondant** (`ProduitTest.java`) :
+
+```java
+@Test
+public void testMult() {
+    assertEquals(6, Produit.mult(2, 3));
+    assertEquals(0, Produit.mult(0, 5));
+    assertEquals(-6, Produit.mult(-2, 3));
+}
+```
+
+**Indice :** Utilisez l'opérateur `*` pour multiplier deux nombres.
+
+**Vérifier votre code :**
+
+```bash
+cd edl-starter/java-exercises/calculs-geo
+make test
+```
+
+**Résultat attendu après implémentation :**
+
+```
+JUnit version 4.13.2
+..E.E
+Time: 0.006
+There were 2 failures:
+...
+Tests run: 4,  Failures: 2
+```
+
+Le test `ProduitTest` devrait maintenant passer !
+
+---
+
+**Votre mission - Partie 2 : Implémenter `Surface.surf()`**
+
+Ouvrez `Surface.java` et complétez la méthode :
+
+```java
+public class Surface {
+    public static int surf(int a, int b) {
+        // TODO: Utiliser Produit.mult() pour calculer la surface d'un rectangle
+        return 0;
+    }
+}
+```
+
+**Test correspondant** (`SurfaceTest.java`) :
+
+```java
+@Test
+public void testSurf() {
+    assertEquals(6, Surface.surf(2, 3));
+    assertEquals(0, Surface.surf(0, 5));
+    assertEquals(12, Surface.surf(3, 4));
+}
+```
+
+**Indice :** La surface d'un rectangle = longueur × largeur. Réutilisez la fonction `Produit.mult()` que vous venez d'écrire.
+
+**Exemple de solution :**
+
+```java
+return Produit.mult(a, b);
+```
+
+**Vérifier :**
+
+```bash
+make test
+```
+
+Maintenant 2 tests sur 4 devraient passer.
+
+---
+
+**Votre mission - Partie 3 : Implémenter `Perimetre.perim()`**
+
+Ouvrez `Perimetre.java` et complétez la méthode :
+
+```java
+public class Perimetre {
+    public static int perim(int a, int b, int c) {
+        // TODO: Calculer (a+b)*c en utilisant Addition.add() et Produit.mult()
+        return 0;
+    }
+}
+```
+
+**Test correspondant** (`PerimetreTest.java`) :
+
+```java
+@Test
+public void testPerim() {
+    assertEquals(10, Perimetre.perim(2, 3, 2));  // (2+3)*2 = 10
+    assertEquals(0, Perimetre.perim(0, 0, 5));
+    assertEquals(14, Perimetre.perim(3, 4, 2));  // (3+4)*2 = 14
+}
+```
+
+**Indice :**
+
+1. Commencez par additionner `a` et `b` avec `Addition.add(a, b)`
+2. Multipliez le résultat par `c` avec `Produit.mult()`
+
+**Exemple de solution :**
+
+```java
+int somme = Addition.add(a, b);
+return Produit.mult(somme, c);
+```
+
+**Vérifier :**
+
+```bash
+make test
+```
+
+**Résultat final attendu :**
+
+```
+JUnit version 4.13.2
+....
+Time: 0.006
+
+OK (4 tests)
+```
+
+Tous les tests passent ? Bravo ! Passez à l'exercice suivant.
+
+---
+
+### ✍️ Exercice 2 : Money - Addition avec Validation de Devises
+
+**🎯 Objectif :** Implémenter une méthode d'addition qui valide que deux montants ont la même devise
+
+Ouvrez le dossier `edl-starter/java-exercises/money/`
+
+**Fichiers du projet :**
+
+- `Money.java` : Classe avec méthode `add()` à implémenter
+- `MoneyTest.java` : Tests JUnit (certains avec TODOs à compléter)
+
+**Votre mission :**
+
+Ouvrez `Money.java` et implémentez la méthode `add()` :
+
+```java
+public Money add(Money m) throws Exception {
+    // TODO: Vérifier si this.currency().equals(m.currency())
+    // TODO: Si oui, retourner new Money(this.amount() + m.amount(), this.currency())
+    // TODO: Si non, throw new Exception("Not Same currency")
+    return null;
+}
+```
+
+**Règles métier :**
+
+- On peut additionner deux montants de même devise : `12 EUR + 5 EUR = 17 EUR`
+- On ne peut PAS additionner deux montants de devises différentes : `12 EUR + 5 USD` → Exception
+
+**Tests correspondants** (`MoneyTest.java`) :
+
+```java
+@Test
+public void testSimpleAdd() throws Exception {
+    Money m12EUR = new Money(12, "EUR");
+    Money m14EUR = new Money(14, "EUR");
+    Money expected = new Money(26, "EUR");
+    assertEquals(expected, m12EUR.add(m14EUR));
+}
+
+@Test(expected = Exception.class)
+public void testAddDifferentCurrency() throws Exception {
+    Money m12EUR = new Money(12, "EUR");
+    Money m5USD = new Money(5, "USD");
+    m12EUR.add(m5USD);  // Doit lever une exception
+}
+```
+
+**Indices :**
+
+1. Utilisez `this.currency()` pour obtenir la devise de l'objet courant
+2. Utilisez `m.currency()` pour obtenir la devise du paramètre
+3. Comparez avec `.equals()` (pas `==`)
+4. Si les devises sont identiques, créez un nouveau `Money` avec la somme des montants
+5. Si les devises sont différentes, lancez une exception avec `throw new Exception("Not Same currency")`
+
+**Exemple de solution :**
+
+```java
+public Money add(Money m) throws Exception {
+    if (this.currency().equals(m.currency())) {
+        return new Money(this.amount() + m.amount(), this.currency());
+    }
+    throw new Exception("Not Same currency");
+}
+```
+
+**Vérifier votre code :**
+
+```bash
+cd edl-starter/java-exercises/money
+make test
+```
+
+**Résultat attendu :**
+
+```
+JUnit version 4.13.2
+....
+Time: 0.007
+
+OK (4 tests)
+```
+
+Tous les tests passent ? Félicitations !
+
+---
+
+### 📚 Comprendre JUnit 4 - Les Bases
+
+**Structure d'un test JUnit :**
+
+```java
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class ExampleTest {
+
+    @Test
+    public void testMethodName() {
+        // Arrange : Préparer les données
+        int a = 2;
+        int b = 3;
+
+        // Act : Exécuter la méthode à tester
+        int result = MyClass.add(a, b);
+
+        // Assert : Vérifier le résultat
+        assertEquals(5, result);
+    }
+}
+```
+
+**Annotations JUnit :**
+
+- `@Test` : Indique qu'une méthode est un test
+- `@Test(expected = Exception.class)` : Le test passe si l'exception est levée
+
+**Méthodes d'assertion principales :**
+
+```java
+assertEquals(expected, actual);     // Vérifie que deux valeurs sont égales
+assertTrue(condition);              // Vérifie qu'une condition est vraie
+assertFalse(condition);             // Vérifie qu'une condition est fausse
+assertNull(object);                 // Vérifie qu'un objet est null
+assertNotNull(object);              // Vérifie qu'un objet n'est pas null
+```
+
+**Exemple de test d'exception :**
+
+```java
+@Test(expected = Exception.class)
+public void testInvalidOperation() throws Exception {
+    Money m1 = new Money(12, "EUR");
+    Money m2 = new Money(5, "USD");
+    m1.add(m2);  // Cette ligne doit lever une Exception
+}
 ```
