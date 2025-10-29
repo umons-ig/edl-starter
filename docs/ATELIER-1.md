@@ -1,6 +1,5 @@
 # 🎓 Atelier 1 : Tests Unitaires Backend & Frontend
 
-**Durée :** 3 heures
 **Objectif :** Apprendre les tests unitaires avec Python (pytest) et TypeScript (Vitest)
 
 ---
@@ -11,6 +10,9 @@
 
 1. Allez sur `https://github.com/umons-ig/edl-starter`
 2. Cliquez sur **"Fork"**
+
+   ![Fork Button](../img/fork.png)
+
 3. Clonez votre fork :
 
    ```bash
@@ -59,13 +61,6 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
-
-**⚠️ Note :** Avec pip, vous devrez créer un fichier `requirements.txt` depuis `pyproject.toml` :
-
-```bash
-pip install -e .
-```
-
 ---
 
 **Dans le reste de l'atelier :**
@@ -75,7 +70,7 @@ pip install -e .
 
 ---
 
-## Phase 2 : Explorer l'Application (15 min)
+## Phase 2 : Explorer l'Application
 
 ### Étape 2.1 : Lancer le Serveur
 
@@ -122,7 +117,7 @@ Ouvrez `backend/src/app.py` dans votre éditeur :
 
 ---
 
-## Phase 3 : Comprendre les Tests (20 min)
+## Phase 3 : Comprendre les Tests
 
 ### Étape 3.1 : Explorer les Fichiers de Test
 
@@ -301,23 +296,29 @@ uv run pytest tests/test_api.py::test_delete_nonexistent_task_returns_404 -v
 
 ### ✍️ Exercice 4 : Écrire un Test de Validation (10 min)
 
-**🎯 Objectif :** Tester qu'on ne peut pas mettre à jour une tâche avec un titre vide
+**🎯 Objectif :** Tester qu'on ne peut pas mettre à jour une tâche avec une priorité invalide
 
-Ouvrez `backend/tests/test_api.py` et ajoutez ce test :
+Ouvrez `backend/tests/test_api.py` et trouvez la fonction `test_update_task_with_invalid_priority`.
+
+**Votre mission :**
+
+Implémentez ce test en suivant les étapes dans les commentaires :
 
 ```python
-def test_update_task_with_empty_title(client):
-    """Updating a task with an empty title should fail."""
+def test_update_task_with_invalid_priority(client):
+    """Updating a task with an invalid priority should fail."""
     # TODO: Votre code ici
-    # 1. Créer une tâche
-    # 2. Essayer de la mettre à jour avec title=""
-    # 3. Vérifier que ça retourne 422
+    # 1. Créer une tâche valide
+    # 2. Essayer de la mettre à jour avec priority="urgent" (invalide)
+    # 3. Vérifier que ça retourne 422 (Erreur de Validation)
 ```
+
+**Rappel :** Les priorités valides sont `"low"`, `"medium"`, `"high"` (voir `TaskPriority` dans `app.py`)
 
 **Vérifier :**
 
 ```bash
-uv run pytest tests/test_api.py::test_update_task_with_empty_title -v
+uv run pytest tests/test_api.py::test_update_task_with_invalid_priority -v
 ```
 
 ---
@@ -409,7 +410,7 @@ start htmlcov/index.html  # Windows
 
 ---
 
-## Phase 6 : Tests Frontend (55 min)
+## Phase 6 : Tests Frontend
 
 ### Étape 6.1 : Comprendre le Frontend
 
@@ -433,10 +434,18 @@ frontend/
 
 **Important :** On teste **uniquement l'API** (pas les composants React) pour rester simple.
 
-### Étape 6.2 : Lancer les Tests Frontend
+### Étape 6.2 : Installer les Dépendances Frontend
 
 ```bash
 cd frontend
+npm install
+```
+
+Cela va installer toutes les dépendances définies dans `package.json`.
+
+### Étape 6.3 : Lancer les Tests Frontend
+
+```bash
 npm test
 ```
 
@@ -452,7 +461,7 @@ Test Files  1 passed (1)
      Tests  3 passed (3)
 ```
 
-### Étape 6.3 : Analyser les Tests
+### Étape 6.4 : Analyser les Tests
 
 Ouvrez `frontend/src/api/api.test.ts` :
 
@@ -482,7 +491,7 @@ describe('API Module', () => {
 - **async/await** : Tests asynchrones
 - **expect()** : Assertions Vitest (similaire à pytest)
 
-### Étape 6.4 : Couverture Frontend
+### Étape 6.5 : Couverture Frontend
 
 ```bash
 npm run test:coverage
@@ -496,9 +505,9 @@ File       | % Stmts | % Branch | % Funcs | % Lines |
 api.ts     |   68.42 |    55.55 |      50 |   68.42 |
 ```
 
-**Note :** On teste uniquement l'API (pas les composants React) pour Atelier 1. C'est suffisant !
+**Note :** On teste uniquement l'API (pas les composants React).
 
-### Étape 6.4 : Comprendre un Test Existant (5 min)
+### Étape 6.6 : Comprendre un Test Existant
 
 Avant d'écrire votre test, analysons comment fonctionne le test `creates a new task` :
 
@@ -601,7 +610,7 @@ npm test
 
 ---
 
-### Étape 6.7 : Couverture Frontend (5 min)
+### Étape 6.7 : Vérifier la Couverture
 
 ```bash
 npm run test:coverage
@@ -615,9 +624,9 @@ File       | % Stmts | % Branch | % Funcs | % Lines |
 api.ts     |   84.21 |    66.67 |   71.43 |   84.21 |
 ```
 
-La couverture a augmenté grâce à vos 2 tests ! 🎉
+La couverture a augmenté grâce à vos tests ! 🎉
 
-### Étape 6.8 : Lancer l'Application Complète (10 min)
+### Étape 6.8 : Lancer l'Application Complète
 
 **Terminal 1 - Backend :**
 
@@ -630,12 +639,13 @@ uv run uvicorn src.app:app --reload
 
 ```bash
 cd frontend
+npm install  # Si pas déjà fait
 npm run dev
 ```
 
 ---
 
-## 🎁 BONUS : Exercices Java (Optionnel - 45 min)
+## 🎁 BONUS : Exercices Java
 
 **Objectif :** Voir que les principes de TDD s'appliquent à tous les langages !
 
