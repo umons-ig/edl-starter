@@ -2,18 +2,17 @@
 TaskFlow Backend - FastAPI Task Management Service
 
 A RESTful API for task management with TDD approach.
+
+ATELIER 1 & 2: Uses in-memory storage for simplicity
+ATELIER 3: Will introduce PostgreSQL database (see migration guide)
 """
 
-from contextlib import asynccontextmanager
-from typing import List, Optional
-from uuid import uuid4
+from typing import List, Optional, Dict
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 import logging
-import os
 
 # Configure logging
 logging.basicConfig(
@@ -23,129 +22,140 @@ logging.basicConfig(
 logger = logging.getLogger("taskflow")
 
 
-# Pydantic Models
+# =============================================================================
+# ENUMS & MODELS
+# =============================================================================
+
 class TaskStatus(str, Enum):
+    """Task status enum - simpler than SQLAlchemy version."""
     TODO = "todo"
     IN_PROGRESS = "in_progress"
     DONE = "done"
 
 
 class TaskPriority(str, Enum):
+    """Task priority enum - simpler than SQLAlchemy version."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
 
 
-class TaskBase(BaseModel):
-    model_config = ConfigDict(use_enum_values=True)
+class TaskCreate(BaseModel):
+    """Model for creating a new task."""
+    title: str = Field(..., min_length=1, max_length=200, description="Task title")
+    description: Optional[str] = Field(None, max_length=1000, description="Task description")
+    status: TaskStatus = Field(default=TaskStatus.TODO, description="Task status")
+    priority: TaskPriority = Field(default=TaskPriority.MEDIUM, description="Task priority")
+    assignee: Optional[str] = Field(None, max_length=100, description="Assigned user")
+    due_date: Optional[datetime] = Field(None, description="Due date")
 
-    title: str = Field(..., min_length=1, max_length=200)
+
+class TaskUpdate(BaseModel):
+    """Model for updating a task - all fields optional for partial updates."""
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    status: TaskStatus = TaskStatus.TODO
-    priority: TaskPriority = TaskPriority.MEDIUM
+    status: Optional[TaskStatus] = None
+    priority: Optional[TaskPriority] = None
     assignee: Optional[str] = Field(None, max_length=100)
     due_date: Optional[datetime] = None
 
 
-class TaskCreate(TaskBase):
-    pass
-
-
-class TaskUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=200)
-    description: Optional[str] = None
-    status: Optional[TaskStatus] = None
-    priority: Optional[TaskPriority] = None
-    assignee: Optional[str] = None
-    due_date: Optional[datetime] = None
-
-
-class Task(TaskBase):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: str
+class Task(TaskCreate):
+    """Model for a task with ID and timestamps."""
+    id: int  # Integer ID instead of UUID string - simpler!
     created_at: datetime
     updated_at: datetime
 
 
-# In-memory storage (just a simple list)
-tasks_storage: List[Task] = []
+# =============================================================================
+# IN-MEMORY STORAGE (for Atelier 1 & 2)
+# =============================================================================
+
+# Simple dictionary to store tasks
+# In Atelier 3, this will be replaced with PostgreSQL database
+tasks_db: Dict[int, Task] = {}
+next_id = 1
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Application lifespan manager.
-    Initialize and cleanup resources.
-    """
-    # Startup
-    logger.info("🚀 TaskFlow backend starting up...")
-    yield
-    # Shutdown
-    logger.info("🛑 TaskFlow backend shutting down...")
+def get_next_id() -> int:
+    """Get next available task ID."""
+    global next_id
+    current_id = next_id
+    next_id += 1
+    return current_id
 
+
+def clear_tasks():
+    """Clear all tasks - useful for testing."""
+    global tasks_db, next_id
+    tasks_db = {}
+    next_id = 1
+
+
+# =============================================================================
+# FASTAPI APP
+# =============================================================================
 
 app = FastAPI(
     title="TaskFlow API",
-    description="Production-ready task management API",
-    version="2.0.0",
-    lifespan=lifespan,
+    description="Simple task management API for learning unit testing and CI/CD",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
 
-# CORS configuration
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+@app.on_event("startup")
+def startup():
+    """Simple startup - just log a message."""
+    logger.info("🚀 TaskFlow backend starting up...")
+    logger.info("Using in-memory storage (no database)")
 
+
+@app.on_event("shutdown")
+def shutdown():
+    """Simple shutdown - just log a message."""
+    logger.info("🛑 TaskFlow backend shutting down...")
+
+
+# =============================================================================
+# ENDPOINTS
+# =============================================================================
 
 @app.get("/")
 async def root():
     """API root endpoint."""
     return {
-        "message": "Welcome to TaskFlow API - Workshop 3 Complete!",
-        "version": "2.1.0",
-        "docs": "/docs",
-        "health": "/health",
-        "status": "healthy"
+        "message": "Welcome to TaskFlow API",
+        "version": "1.0.0",
+        "docs": "/docs"
     }
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for monitoring."""
-    environment = os.getenv("ENVIRONMENT", "development")
+    """Simple health check endpoint."""
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "environment": environment,
-        "version": "2.1.0",
-        "storage": "in-memory"
+        "tasks_count": len(tasks_db)
     }
 
 
 @app.get("/tasks", response_model=List[Task])
-async def list_tasks(
+async def get_tasks(
     status: Optional[TaskStatus] = None,
     priority: Optional[TaskPriority] = None,
-    assignee: Optional[str] = None,
-):
+    assignee: Optional[str] = None
+) -> List[Task]:
     """
-    List all tasks with optional filtering.
+    Get all tasks with optional filtering.
 
     Query parameters:
     - status: Filter by task status (todo, in_progress, done)
-    - priority: Filter by priority level (low, medium, high)
-    - assignee: Filter by assigned person
+    - priority: Filter by priority (low, medium, high)
+    - assignee: Filter by assignee email
     """
-    tasks = tasks_storage.copy()
+    tasks = list(tasks_db.values())
 
     # Apply filters
     if status:
@@ -158,88 +168,95 @@ async def list_tasks(
     return tasks
 
 
-@app.post("/tasks", response_model=Task, status_code=201)
-async def create_task(task_data: TaskCreate):
-    """
-    Create a new task.
+@app.get("/tasks/{task_id}", response_model=Task)
+async def get_task(task_id: int) -> Task:
+    """Get a single task by ID."""
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    return tasks_db[task_id]
 
-    Returns the created task with generated ID and timestamps.
-    """
-    logger.info(f"Creating task: {task_data.title}")
+
+@app.post("/tasks", response_model=Task, status_code=201)
+async def create_task(task_data: TaskCreate) -> Task:
+    """Create a new task."""
+    # Validate title is not empty
+    if not task_data.title or not task_data.title.strip():
+        raise HTTPException(status_code=422, detail="Title cannot be empty")
+
+    # Create new task with auto-generated ID
+    task_id = get_next_id()
     now = datetime.utcnow()
 
     task = Task(
-        id=str(uuid4()),
+        id=task_id,
+        title=task_data.title,
+        description=task_data.description,
+        status=task_data.status,
+        priority=task_data.priority,
+        assignee=task_data.assignee,
+        due_date=task_data.due_date,
         created_at=now,
-        updated_at=now,
-        **task_data.model_dump()
+        updated_at=now
     )
 
-    tasks_storage.append(task)
-    logger.info(f"Task created successfully: {task.id}")
+    tasks_db[task_id] = task
+    logger.info(f"Task created successfully: {task_id}")
     return task
 
 
-@app.get("/tasks/{task_id}", response_model=Task)
-async def get_task(task_id: str):
-    """
-    Get a specific task by ID.
-
-    Returns 404 if task not found.
-    """
-    for task in tasks_storage:
-        if task.id == task_id:
-            return task
-
-    raise HTTPException(status_code=404, detail=f"Task with ID '{task_id}' not found")
-
-
 @app.put("/tasks/{task_id}", response_model=Task)
-async def update_task(task_id: str, update_data: TaskUpdate):
+async def update_task(task_id: int, updates: TaskUpdate) -> Task:
     """
-    Update an existing task.
+    Update an existing task (partial update supported).
 
-    Returns the updated task or 404 if not found.
+    TODO (Atelier 1 - Exercice 2): Implémenter cette fonction
+
+    Étapes à suivre:
+    1. Vérifier que la tâche existe dans tasks_db
+       - Si elle n'existe pas, lever HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    2. Récupérer la tâche existante
+
+    3. Extraire les champs à mettre à jour avec updates.model_dump(exclude_unset=True)
+
+    4. Valider le titre s'il est fourni (ne doit pas être vide)
+       - Si vide, lever HTTPException(status_code=422, detail="Title cannot be empty")
+
+    5. Créer une nouvelle Task avec:
+       - Les champs mis à jour (utiliser update_data.get("field", existing_task.field))
+       - created_at = existing_task.created_at (ne change pas)
+       - updated_at = datetime.utcnow() (nouvelle date)
+
+    6. Mettre à jour tasks_db[task_id]
+
+    7. Retourner la tâche mise à jour
+
+    Indice: Regardez comment create_task fonctionne pour vous inspirer
     """
-    for task in tasks_storage:
-        if task.id == task_id:
-            # Update fields that are provided
-            update_dict = update_data.model_dump(exclude_unset=True)
-            for field, value in update_dict.items():
-                setattr(task, field, value)
-
-            # Update timestamp
-            task.updated_at = datetime.utcnow()
-            return task
-
-    raise HTTPException(status_code=404, detail=f"Task with ID '{task_id}' not found")
+    # TODO: Votre code ici
+    raise HTTPException(status_code=501, detail="Update not implemented yet - complete this function!")
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
-async def delete_task(task_id: str):
+async def delete_task(task_id: int):
     """
     Delete a task by ID.
 
-    Returns 204 on success, 404 if not found.
+    TODO (Atelier 1 - Exercice 1): Implémenter cette fonction
+
+    Étapes à suivre:
+    1. Vérifier que la tâche existe dans tasks_db
+       - Si elle n'existe pas, lever HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    2. Supprimer la tâche du dictionnaire tasks_db
+       - Utiliser: del tasks_db[task_id]
+
+    3. Retourner None (car status_code=204 n'a pas de body)
+
+    Indice: C'est très simple, seulement 3 lignes de code !
     """
-    for i, task in enumerate(tasks_storage):
-        if task.id == task_id:
-            tasks_storage.pop(i)
-            return
-
-    raise HTTPException(status_code=404, detail=f"Task with ID '{task_id}' not found")
-
-
-# Global exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request, exc: Exception):
-    """Handle unexpected errors gracefully."""
-    logger.error(f"Unexpected error: {exc}", exc_info=True)
-
-    return {
-        "detail": "Internal server error",
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    # TODO: Votre code ici
+    raise HTTPException(status_code=501, detail="Delete not implemented yet - complete this function!")
 
 
 if __name__ == "__main__":

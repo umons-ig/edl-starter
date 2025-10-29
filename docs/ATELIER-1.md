@@ -1,19 +1,7 @@
-# 🎓 Atelier 1 : Tests Modernes en Python & CI/CD
+# 🎓 Atelier 1 : Tests Unitaires Backend & Frontend
 
 **Durée :** 3 heures
-**Objectif :** Apprendre UV, pytest et GitHub Actions
-
----
-
-## 📋 Vue d'Ensemble
-
-Dans cet atelier, vous allez :
-
-- ✅ Utiliser **UV** pour gérer les dépendances Python
-- ✅ Écrire des **tests** avec pytest
-- ✅ Configurer **GitHub Actions** pour l'intégration continue
-
-**Important :** Vous n'allez PAS construire l'application depuis zéro. L'application est déjà prête, vous allez apprendre à la tester !
+**Objectif :** Apprendre les tests unitaires avec Python (pytest) et TypeScript (Vitest)
 
 ---
 
@@ -21,7 +9,7 @@ Dans cet atelier, vous allez :
 
 ### Étape 1.1 : Forker le Dépôt
 
-1. Allez sur `https://github.com/umons/edl-starter`
+1. Allez sur `https://github.com/umons-ig/edl-starter`
 2. Cliquez sur **"Fork"**
 3. Clonez votre fork :
 
@@ -30,27 +18,27 @@ Dans cet atelier, vous allez :
    cd edl-starter
    ```
 
-### Étape 1.2 : Installer UV
+### Étape 1.2 : Installer les Dépendances Python (2 Options)
 
-**macOS/Linux :**
+**Option A : Avec UV (Recommandé - Plus Rapide) ⚡**
+
+UV est un gestionnaire de paquets Python moderne et ultra-rapide.
+
+**Installation UV :**
+
+*macOS/Linux :*
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-**Windows :**
+*Windows :*
 
 ```powershell
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Vérifiez :
-
-```bash
-uv --version
-```
-
-### Étape 1.3 : Installer les Dépendances
+**Installer les dépendances :**
 
 ```bash
 cd backend
@@ -59,11 +47,31 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 uv sync
 ```
 
-**Qu'est-ce que ça fait ?**
+---
 
-- `uv venv` → Crée un environnement virtuel isolé
-- `source .venv/bin/activate` → Active l'environnement
-- `uv sync` → Installe toutes les dépendances depuis `pyproject.toml`
+**Option B : Avec pip (Classique) 🐍**
+
+Si vous préférez pip ou avez déjà Python installé :
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+**⚠️ Note :** Avec pip, vous devrez créer un fichier `requirements.txt` depuis `pyproject.toml` :
+
+```bash
+pip install -e .
+```
+
+---
+
+**Dans le reste de l'atelier :**
+
+- Si vous utilisez **UV** : `uv run pytest`
+- Si vous utilisez **pip** : `pytest`
 
 ---
 
@@ -106,8 +114,11 @@ Ouvrez `backend/src/app.py` dans votre éditeur :
 
 - **Lignes 27-36 :** Énumérations (TaskStatus, TaskPriority)
 - **Lignes 39-68 :** Modèles Pydantic
-- **Lignes 161-181 :** Endpoint pour créer une tâche
-- **Lignes 134-158 :** Endpoint pour lister les tâches
+- **Lignes 76-77 :** Stockage en mémoire (dictionnaire simple)
+- **Lignes 180-205 :** Endpoint pour créer une tâche
+- **Lignes 144-160 :** Endpoint pour lister les tâches
+
+**Important :** Ce backend utilise un **stockage en mémoire** (un simple dictionnaire Python) pour Atelier 1 & 2. Vous apprendrez à utiliser PostgreSQL dans l'Atelier 3.
 
 ---
 
@@ -125,6 +136,13 @@ Ouvrez ces fichiers :
 Dans `conftest.py`, regardez :
 
 ```python
+@pytest.fixture(autouse=True)
+def clean_tasks():
+    """Nettoie les tâches avant et après chaque test"""
+    clear_tasks()
+    yield
+    clear_tasks()
+
 @pytest.fixture
 def client():
     """Fournit un client HTTP de test"""
@@ -134,8 +152,9 @@ def client():
 
 **Pourquoi c'est utile ?**
 
-- Vous n'avez pas à créer un client dans chaque test
-- pytest l'injecte automatiquement quand vous écrivez `def test_xxx(client):`
+- `clean_tasks` : Nettoie automatiquement le stockage en mémoire avant chaque test
+- `client` : Vous n'avez pas à créer un client dans chaque test
+- pytest les injecte automatiquement quand vous écrivez `def test_xxx(client):`
 
 ### Étape 3.3 : Lancer les Tests Existants
 
@@ -145,14 +164,15 @@ uv run pytest -v
 
 Vous devriez voir :
 
-```
+```text
 tests/test_api.py::test_root_endpoint PASSED
 tests/test_api.py::test_health_check PASSED
 tests/test_api.py::test_create_task PASSED
 tests/test_api.py::test_list_tasks PASSED
 tests/test_api.py::test_get_task_by_id PASSED
+... (19 tests au total)
 
-========== 5 passed in 0.45s ==========
+========== 19 passed in 0.45s ==========
 ```
 
 ### Étape 3.4 : Comprendre un Test
@@ -183,83 +203,177 @@ def test_create_task(client):
 
 ---
 
-## Phase 4 : Écrire Vos Tests (45 min)
+## Phase 4 : Implémenter les Fonctions Backend
 
-### 🎯 Exercice 1 : Test DELETE (15 min - À faire ensemble)
+### ✍️ Exercice 1 : Implémenter `delete_task()`
 
-**Objectif :** Écrire un test qui supprime une tâche
+**🎯 Objectif :** Compléter la fonction `delete_task()` dans `backend/src/app.py`
 
-**Étapes :**
+Ouvrez `backend/src/app.py` et trouvez la fonction `delete_task()` (ligne ~240).
 
-1. Créer une tâche
-2. Obtenir son ID
-3. La supprimer avec `client.delete()`
-4. Vérifier qu'elle a disparu (404)
+**Les tests existent déjà !** Regardez dans `test_api.py` :
 
-**Travaillons ensemble :**
+- `test_delete_task` : Supprime une tâche et vérifie qu'elle a disparu
+- `test_delete_nonexistent_task` : Vérifie le 404
 
-```python
-def test_delete_task(client):
-    # 1. Créer une tâche
-    create_response = client.post("/tasks", json={"title": "À supprimer"})
-    task_id = create_response.json()["id"]
+**Votre mission :**
 
-    # 2. Supprimer la tâche
-    delete_response = client.delete(f"/tasks/{task_id}")
-    assert delete_response.status_code == 204
-
-    # 3. Vérifier qu'elle a disparu
-    get_response = client.get(f"/tasks/{task_id}")
-    assert get_response.status_code == 404
-```
-
-**Points clés :**
-
-- ⚠️ N'oubliez pas le `f` dans `f"/tasks/{task_id}"`
-- ⚠️ DELETE retourne 204, pas 200
-- ⚠️ Il faut VÉRIFIER que la tâche a bien disparu
-
-### ✍️ Exercice 2 : Test UPDATE (10 min - À faire seul)
-
-Complétez `test_update_task` dans `test_api.py` :
-
-**Objectif :** Mettre à jour le titre d'une tâche
-
-**Astuce :** C'est similaire au test DELETE, mais avec `client.put()`
-
-### ✍️ Exercice 3 : Test Validation Titre Vide (5 min)
-
-Complétez `test_create_task_empty_title` :
-
-**Objectif :** Vérifier qu'un titre vide est refusé
+Implémentez les 3 étapes décrites dans le TODO :
 
 ```python
-def test_create_task_empty_title(client):
-    response = client.post("/tasks", json={"title": ""})
-    assert response.status_code == 422  # Erreur de validation
+@app.delete("/tasks/{task_id}", status_code=204)
+async def delete_task(task_id: int):
+    # TODO: Votre code ici
+    # 1. Vérifier que la tâche existe
+    # 2. La supprimer de tasks_db
+    # 3. Retourner None
 ```
 
-### ✍️ Exercice 4 : Test Titre Manquant (5 min)
+**Vérifier votre code :**
 
-Complétez `test_create_task_no_title` :
+```bash
+cd backend
+uv run pytest tests/test_api.py::test_delete_task -v
+```
 
-**Objectif :** Vérifier qu'une tâche sans titre est refusée
+✅ Si le test passe → **Bravo !**
 
-### ✍️ Exercice 5 : Test 404 (5 min)
-
-Complétez `test_get_nonexistent_task` :
-
-**Objectif :** Vérifier qu'obtenir une tâche inexistante retourne 404
-
-### 🎁 Exercices Bonus (Si vous avez le temps)
-
-- **Bonus 1 :** Tester le filtrage par statut
-- **Bonus 2 :** Tester la mise à jour partielle
-- **Bonus 3 :** Tester le cycle de vie complet
+❌ Si le test échoue → Lisez l'erreur et corrigez
 
 ---
 
-## Phase 5 : Couverture de Code (15 min)
+### ✍️ Exercice 2 : Implémenter `update_task()`
+
+**🎯 Objectif :** Compléter la fonction `update_task()` dans `backend/src/app.py`
+
+Trouvez la fonction `update_task()` (ligne ~207).
+
+**Les tests existent déjà !** Regardez :
+
+- `test_update_task` : Change le titre d'une tâche
+- `test_update_task_status` : Change le statut
+- `test_update_nonexistent_task` : Vérifie le 404
+
+**Votre mission :**
+
+Implémentez les 7 étapes décrites dans le TODO.
+
+**Indices :**
+
+1. C'est similaire à `create_task` mais avec une tâche existante
+2. Utilisez `updates.model_dump(exclude_unset=True)` pour obtenir les champs fournis
+3. Utilisez `update_data.get("field", existing_task.field)` pour garder les anciennes valeurs si non mises à jour
+
+**Vérifier votre code :**
+
+```bash
+uv run pytest tests/test_api.py::test_update_task -v
+```
+
+---
+
+### ✍️ Exercice 3 : Écrire un Test de Suppression Inexistante (10 min)
+
+**🎯 Objectif :** Tester qu'on ne peut pas supprimer une tâche qui n'existe pas
+
+Ouvrez `backend/tests/test_api.py` et trouvez la section DELETE TASK TESTS.
+
+Ajoutez ce test après `test_delete_task` :
+
+```python
+def test_delete_nonexistent_task_returns_404(client):
+    """Deleting a task that doesn't exist should return 404."""
+    # TODO: Votre code ici
+    # 1. Essayer de supprimer une tâche avec un ID qui n'existe pas (ex: 9999)
+    # 2. Vérifier que ça retourne 404
+    # 3. Vérifier le message d'erreur contient "not found"
+```
+
+**Indice :** C'est un test d'erreur très simple - seulement 3-4 lignes de code !
+
+**Vérifier :**
+
+```bash
+uv run pytest tests/test_api.py::test_delete_nonexistent_task_returns_404 -v
+```
+
+---
+
+### ✍️ Exercice 4 : Écrire un Test de Validation (10 min)
+
+**🎯 Objectif :** Tester qu'on ne peut pas mettre à jour une tâche avec un titre vide
+
+Ouvrez `backend/tests/test_api.py` et ajoutez ce test :
+
+```python
+def test_update_task_with_empty_title(client):
+    """Updating a task with an empty title should fail."""
+    # TODO: Votre code ici
+    # 1. Créer une tâche
+    # 2. Essayer de la mettre à jour avec title=""
+    # 3. Vérifier que ça retourne 422
+```
+
+**Vérifier :**
+
+```bash
+uv run pytest tests/test_api.py::test_update_task_with_empty_title -v
+```
+
+---
+
+### ✍️ Exercice 5 : Écrire un Test de Filtrage (10 min)
+
+**🎯 Objectif :** Tester le filtrage avec plusieurs critères
+
+Ajoutez ce test dans la section FILTER TASKS TESTS :
+
+```python
+def test_filter_by_multiple_criteria(client):
+    """Filtering by status AND priority should work."""
+    # TODO: Votre code ici
+    # 1. Créer 3 tâches avec différents status et priority
+    # 2. Filtrer avec GET /tasks?status=todo&priority=high
+    # 3. Vérifier qu'on reçoit seulement les bonnes tâches
+```
+
+**Vérifier :**
+
+```bash
+uv run pytest tests/test_api.py::test_filter_by_multiple_criteria -v
+```
+
+---
+
+### Étape 4.6 : Lancer TOUS les Tests (5 min)
+
+Une fois que vous avez terminé les 5 exercices, lancez tous les tests :
+
+```bash
+uv run pytest -v
+```
+
+**Résultat attendu :**
+
+```text
+tests/test_api.py::test_root_endpoint PASSED
+tests/test_api.py::test_health_check PASSED
+tests/test_api.py::test_create_simple_task PASSED
+...
+tests/test_api.py::test_delete_task PASSED
+tests/test_api.py::test_update_task PASSED
+tests/test_api.py::test_delete_nonexistent_task_returns_404 PASSED
+tests/test_api.py::test_update_task_with_empty_title PASSED
+tests/test_api.py::test_filter_by_multiple_criteria PASSED
+...
+========== 22+ passed in 0.5s ==========
+```
+
+🎉 **Tous les tests passent ?** Vous avez réussi !
+
+---
+
+## Phase 5 : Couverture de Code
 
 ### Étape 5.1 : Lancer les Tests avec Couverture
 
@@ -269,14 +383,16 @@ uv run pytest --cov
 
 Résultat :
 
-```
----------- coverage -----------
+```text
+---------- coverage: platform darwin, python 3.12.7 -----------
 Name                Stmts   Miss  Cover
 ---------------------------------------
-src/app.py            156     12    92%
+src/app.py            156      6    96%
 ---------------------------------------
-TOTAL                 156     12    92%
+TOTAL                 156      6    96%
 ```
+
+**Note :** La couverture est très élevée (96%) car le backend est simple avec stockage en mémoire. Dans l'Atelier 3, vous ajouterez une base de données PostgreSQL.
 
 ### Étape 5.2 : Générer un Rapport HTML
 
@@ -291,175 +407,292 @@ open htmlcov/index.html  # macOS
 start htmlcov/index.html  # Windows
 ```
 
-**Questions à se poser :**
-
-- Quelles lignes ne sont pas testées ?
-- Est-ce important de les tester ?
-- Comment atteindre 95% de couverture ?
-
 ---
 
-## Phase 6 : GitHub Actions (40 min)
+## Phase 6 : Tests Frontend (55 min)
 
-### Étape 6.1 : Créer le Fichier Workflow
+### Étape 6.1 : Comprendre le Frontend
+
+Le frontend est une application **React + TypeScript** simple qui communique avec le backend.
+
+**Structure :**
+
+```
+frontend/
+├── src/
+│   ├── App.tsx              # Composant principal
+│   ├── App.css              # Styles simples
+│   ├── api/
+│   │   ├── api.ts           # Client API
+│   │   └── api.test.ts      # Tests API ← ON TESTE ÇA
+│   └── components/
+│       ├── SimpleTaskList.tsx
+│       └── TaskForm.tsx
+└── package.json
+```
+
+**Important :** On teste **uniquement l'API** (pas les composants React) pour rester simple.
+
+### Étape 6.2 : Lancer les Tests Frontend
 
 ```bash
-touch .github/workflows/test.yml
+cd frontend
+npm test
 ```
 
-### Étape 6.2 : Écrire le Workflow
+Vous devriez voir :
 
-Ouvrez `.github/workflows/test.yml` et ajoutez :
+```
+✓ src/api/api.test.ts (3 tests) 4ms
+  ✓ fetches tasks from the backend
+  ✓ creates a new task
+  ✓ throws error when API fails
 
-```yaml
-name: Tests Backend
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Récupérer le code
-      uses: actions/checkout@v4
-
-    - name: Installer Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Installer UV
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Installer les dépendances
-      run: |
-        cd backend
-        uv venv
-        uv sync
-
-    - name: Lancer les tests
-      run: |
-        cd backend
-        uv run pytest -v --cov
-
-    - name: Vérifier la couverture
-      run: |
-        cd backend
-        uv run pytest --cov --cov-fail-under=85
+Test Files  1 passed (1)
+     Tests  3 passed (3)
 ```
 
-### Étape 6.3 : Comprendre le Workflow
+### Étape 6.3 : Analyser les Tests
 
-**Déclencheurs (`on`) :**
+Ouvrez `frontend/src/api/api.test.ts` :
 
-- Se lance quand vous poussez sur `main`
-- Se lance sur chaque pull request
+```typescript
+describe('API Module', () => {
+  it('fetches tasks from the backend', async () => {
+    // Mock fetch pour simuler la réponse
+    (globalThis as any).fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([
+          { id: 1, title: 'Test Task', status: 'todo' }
+        ]),
+      })
+    );
 
-**Étapes (`steps`) :**
+    const tasks = await api.getTasks();
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].title).toBe('Test Task');
+  });
+});
+```
 
-1. Récupérer le code
-2. Installer Python 3.11
-3. Installer UV
-4. Installer les dépendances
-5. Lancer les tests
-6. Vérifier que la couverture est ≥ 85%
+**Concepts clés :**
 
-### Étape 6.4 : Pousser sur GitHub
+- **Mocking** : On simule `fetch()` pour ne pas appeler le vrai backend
+- **async/await** : Tests asynchrones
+- **expect()** : Assertions Vitest (similaire à pytest)
+
+### Étape 6.4 : Couverture Frontend
 
 ```bash
-git add .
-git commit -m "Ajout des tests et du workflow CI/CD"
-git push origin main
+npm run test:coverage
 ```
 
-### Étape 6.5 : Vérifier sur GitHub
+Résultat :
 
-1. Allez sur votre dépôt GitHub
-2. Cliquez sur l'onglet **"Actions"**
-3. Vous verrez votre workflow en cours d'exécution
-4. Attendez la coche verte ✅
+```
+File       | % Stmts | % Branch | % Funcs | % Lines |
+-----------|---------|----------|---------|---------|
+api.ts     |   68.42 |    55.55 |      50 |   68.42 |
+```
 
-**Si ça échoue :**
+**Note :** On teste uniquement l'API (pas les composants React) pour Atelier 1. C'est suffisant !
 
-- Cliquez sur le workflow rouge
-- Regardez quelle étape a échoué
-- Lisez le message d'erreur
-- Corrigez et poussez à nouveau
+### Étape 6.4 : Comprendre un Test Existant (5 min)
 
----
+Avant d'écrire votre test, analysons comment fonctionne le test `creates a new task` :
 
-## Phase 7 : Vérification Finale (15 min)
+```typescript
+it('creates a new task', async () => {
+  // 1. ARRANGE : Préparer les données
+  const newTask = { title: 'New Task', status: 'todo' as const };
 
-### ✅ Liste de Contrôle
+  // 2. ARRANGE : Mocker fetch pour simuler la réponse du backend
+  (globalThis as any).fetch = vi.fn(() =>
+    Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({ ...newTask, id: 1 }),
+    })
+  );
 
-Vérifiez que vous avez :
+  // 3. ACT : Appeler la fonction à tester
+  const created = await api.createTask(newTask);
 
-- [ ] UV installé (`uv --version` fonctionne)
-- [ ] L'application qui tourne localement
-- [ ] Tous les tests originaux qui passent
-- [ ] Au moins 5 nouveaux tests écrits
-- [ ] Couverture > 85%
-- [ ] Fichier `.github/workflows/test.yml` créé
-- [ ] Tests qui passent sur GitHub ✅
+  // 4. ASSERT : Vérifier les résultats
+  expect(created.id).toBe(1);
+  expect(created.title).toBe('New Task');
+});
+```
 
-### 🎓 Ce que Vous Avez Appris
+**Que fait ce test ?**
 
-**UV :**
+1. **Arrange** : Prépare les données (newTask) et mock fetch
+2. **Act** : Appelle `api.createTask()`
+3. **Assert** : Vérifie que la tâche créée a bien un ID et le bon titre
 
-- ✅ Installation et configuration
-- ✅ `uv venv` et `uv sync`
-- ✅ Gestion moderne des dépendances
-
-**pytest :**
-
-- ✅ Structure d'un test (Arrange-Act-Assert)
-- ✅ Fixtures (`client`, `reset_storage`)
-- ✅ Lancer des tests
-- ✅ Couverture de code
-
-**HTTP Testing :**
-
-- ✅ GET, POST, PUT, DELETE
-- ✅ Codes de statut (200, 201, 204, 404, 422)
-- ✅ Validation des données
-
-**GitHub Actions :**
-
-- ✅ Créer un workflow
-- ✅ Tests automatisés
-- ✅ Intégration continue (CI)
+**Pattern AAA** - le même qu'en Python ! 🎯
 
 ---
 
-## 🆘 Problèmes Courants
+### ✍️ Exercice 6 : Écrire un Test Frontend (10 min)
 
-### "Module not found"
+**🎯 Objectif :** Tester la fonction `deleteTask()` du module API
 
-→ Activez l'environnement virtuel : `source .venv/bin/activate`
+Ouvrez `frontend/src/api/api.test.ts` et trouvez le test marqué `it.todo(...)` :
 
-### "No module named 'src'"
+```typescript
+it.todo('deletes a task', async () => {
+  // TODO: Votre code ici
+  // 1. Mocker fetch pour simuler une suppression réussie (status: 204)
+  // 2. Appeler await api.deleteTask(1)
+  // 3. Vérifier que fetch a été appelé avec la bonne URL et méthode DELETE
+});
+```
 
-→ Vous devez être dans `backend/` : `cd backend`
+**Votre mission :** Implémentez ce test en suivant les 3 étapes !
 
-### Tests qui échouent
+**Indice :** Regardez le test `creates a new task` juste au-dessus pour vous inspirer.
 
-→ Lancez un seul test : `uv run pytest tests/test_api.py::test_create_task -v -s`
+**Vérifier votre test :**
 
-### Workflow GitHub qui échoue
+```bash
+cd frontend
+npm test
+```
 
-→ Vérifiez que vous avez bien `cd backend` avant chaque commande
+✅ Si le test passe → **Bravo !** Vous devriez voir **4 tests passed** au lieu de 3 !
+
+❌ Si le test échoue → Lisez l'erreur et corrigez
 
 ---
 
-## 📚 Ressources
+### ✍️ Exercice 7 : Écrire un Test UPDATE Frontend (10 min)
 
-- [Documentation FastAPI](https://fastapi.tiangolo.com/)
-- [Documentation pytest](https://docs.pytest.org/)
-- [Documentation UV](https://docs.astral.sh/uv/)
+**🎯 Objectif :** Tester la fonction `updateTask()` du module API
+
+Dans `frontend/src/api/api.test.ts`, trouvez le deuxième test marqué `it.todo(...)` :
+
+```typescript
+it.todo('updates a task', async () => {
+  // TODO: Votre code ici
+  // 1. Mocker fetch pour simuler une mise à jour réussie
+  // 2. Appeler await api.updateTask(1, { title: 'Updated Title' })
+  // 3. Vérifier que fetch a été appelé avec la bonne URL, méthode PUT et body
+});
+```
+
+**Votre mission :** Implémentez ce test en suivant les 3 étapes !
+
+**Indices :**
+
+1. C'est similaire au test DELETE, mais avec méthode `PUT` au lieu de `DELETE`
+2. Il faut aussi vérifier le `body` contient les bonnes données
+3. Le mock fetch doit retourner un objet avec `json()` (comme dans `creates a new task`)
+
+**Vérifier votre test :**
+
+```bash
+npm test
+```
+
+✅ Si le test passe → **Bravo !** Vous devriez voir **5 tests passed** !
+
+❌ Si le test échoue → Lisez l'erreur et corrigez
+
+---
+
+### Étape 6.7 : Couverture Frontend (5 min)
+
+```bash
+npm run test:coverage
+```
+
+Résultat :
+
+```
+File       | % Stmts | % Branch | % Funcs | % Lines |
+-----------|---------|----------|---------|---------|
+api.ts     |   84.21 |    66.67 |   71.43 |   84.21 |
+```
+
+La couverture a augmenté grâce à vos 2 tests ! 🎉
+
+### Étape 6.8 : Lancer l'Application Complète (10 min)
+
+**Terminal 1 - Backend :**
+
+```bash
+cd backend
+uv run uvicorn src.app:app --reload
+```
+
+**Terminal 2 - Frontend :**
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
+
+## 🎁 BONUS : Exercices Java (Optionnel - 45 min)
+
+**Objectif :** Voir que les principes de TDD s'appliquent à tous les langages !
+
+Les exercices Java sont dans le dossier [`java-exercises/`](../java-exercises/).
+
+### Pourquoi Java en Bonus ?
+
+Dans ce cours, on utilise **Python** pour le backend, mais les concepts de tests unitaires sont **universels** :
+
+- Pattern **Arrange-Act-Assert**
+- **Fixtures** (setup/teardown)
+- **Assertions**
+- **Couverture de code**
+
+Les exercices Java vous montrent que ces principes fonctionnent de la même manière dans **tous les langages** !
+
+### Exercices Disponibles
+
+**3 exercices progressifs avec JUnit :**
+
+1. **Calculator** (15 min) - Opérations arithmétiques simples
+2. **StringUtils** (15 min) - Manipulation de chaînes de caractères
+3. **BankAccount** (15 min) - Gestion de compte avec validation
+
+**Chaque exercice contient :**
+
+- ✅ Un test d'exemple (déjà implémenté)
+- ❌ Des tests à compléter (marqués `@Test`)
+- 🎯 Du code à implémenter (marqué `// TODO`)
+
+### Configuration VSCode (5 min)
+
+**Extensions requises :**
+
+1. **Language Support for Java(TM) by Red Hat**
+2. **Extension Pack for Java** (Microsoft)
+
+Installez-les depuis VSCode : `Cmd+Shift+X` → Recherchez "Java"
+
+**Voir le README complet :** [`java-exercises/README.md`](../java-exercises/README.md)
+
+### Commencer les Exercices
+
+```bash
+# 1. Ouvrir le dossier dans VSCode
+cd java-exercises
+code .
+
+# 2. Attendre que VSCode détecte les fichiers Java
+
+# 3. Cliquer sur l'icône ▶️ à côté des tests
+```
+
+**Alternative (terminal) :**
+
+```bash
+cd java-exercises/calculator
+javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
+java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore CalculatorTest
+```

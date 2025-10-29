@@ -1,6 +1,6 @@
 import { Task, TaskCreate, TaskUpdate, TaskStatus, TaskPriority } from '../types/index';
 
-// API Base URL - use environment variable or proxy in development
+// API Base URL - use environment variable in production or proxy in development
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Helper function for API calls
@@ -27,11 +27,13 @@ export const api = {
   // Get all tasks with optional filters
   async getTasks(
     status?: TaskStatus,
-    priority?: TaskPriority
+    priority?: TaskPriority,
+    assignee?: string
   ): Promise<Task[]> {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (priority) params.append('priority', priority);
+    if (assignee) params.append('assignee', assignee);
 
     const query = params.toString();
     const endpoint = `/tasks${query ? `?${query}` : ''}`;
@@ -40,7 +42,7 @@ export const api = {
   },
 
   // Get single task
-  async getTask(taskId: string): Promise<Task> {
+  async getTask(taskId: number): Promise<Task> {
     return apiRequest<Task>(`/tasks/${taskId}`);
   },
 
@@ -53,7 +55,7 @@ export const api = {
   },
 
   // Update existing task
-  async updateTask(taskId: string, updates: TaskUpdate): Promise<Task> {
+  async updateTask(taskId: number, updates: TaskUpdate): Promise<Task> {
     return apiRequest<Task>(`/tasks/${taskId}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
@@ -61,7 +63,7 @@ export const api = {
   },
 
   // Delete task
-  async deleteTask(taskId: string): Promise<void> {
+  async deleteTask(taskId: number): Promise<void> {
     const url = `${API_BASE}/tasks/${taskId}`;
     const response = await fetch(url, {
       method: 'DELETE',
@@ -73,6 +75,6 @@ export const api = {
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
-    // DELETE returns 204 No Content
+    // Don't try to parse JSON for DELETE - it may return 204 No Content
   },
 };

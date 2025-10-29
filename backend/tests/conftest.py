@@ -1,26 +1,17 @@
-"""
-Test Configuration for TaskFlow - Workshop Version
-
-This file sets up the test environment for pytest.
-Fixtures are reusable test components.
-"""
-
 import pytest
 from fastapi.testclient import TestClient
-from src.app import app, tasks_storage
+from src.app import app, clear_tasks
 
 
 @pytest.fixture(autouse=True)
-def reset_storage():
+def clean_tasks():
     """
-    Clean the task storage before and after each test.
-
-    This ensures each test starts with a fresh, empty list.
-    The 'autouse=True' means this runs automatically for every test.
+    Clear all tasks before each test.
+    This ensures tests don't interfere with each other.
     """
-    tasks_storage.clear()  # Clean before test
-    yield                  # Run the test
-    tasks_storage.clear()  # Clean after test
+    clear_tasks()
+    yield
+    clear_tasks()
 
 
 @pytest.fixture
@@ -31,6 +22,7 @@ def client():
     Usage in tests:
         def test_something(client):
             response = client.get("/tasks")
+            assert response.status_code == 200
     """
     with TestClient(app) as test_client:
         yield test_client

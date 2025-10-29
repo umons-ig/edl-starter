@@ -4,34 +4,33 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
 .venv/
+env/
 venv/
 ENV/
-env/
-
-# Testing
+env.bak/
+venv.bak/
 .pytest_cache/
 .coverage
 htmlcov/
-.tox/
-*.cover
+*.db
+*.sqlite3
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDEs
 .vscode/
@@ -39,17 +38,18 @@ htmlcov/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-Thumbs.db
 
-# Environment variables
-.env
-.env.local
+# Build artifacts
+build/
+*.egg-info/
+.eggs/
 
-# UV
-uv.lock
+# Testing
+.coverage.*
+htmlcov/
+.pytest_cache/
 
 # Logs
 *.log
+logs/
