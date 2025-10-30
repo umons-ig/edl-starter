@@ -1,4 +1,4 @@
-# 🚀 Atelier 3 : Base de Données et Déploiement en Production
+# 🚀 TP 3 : Base de Données et Déploiement en Production
 
 **Durée estimée :** 3h00
 **Prérequis :** Ateliers 1 & 2 terminés + compte GitHub
@@ -962,4 +962,4 @@ Temps total: ~5-7 minutes
 
 ---
 
-**Version 4.0** - Atelier 3 : Base de Données et Déploiement en Production (3h)
+**Version 4.0** - TP 3 : Base de Données et Déploiement en Production (3h)

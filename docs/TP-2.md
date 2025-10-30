@@ -1,7 +1,7 @@
-# 🚀 Atelier 2 : CI/CD avec GitHub Actions
+# 🚀 TP 2 : CI/CD avec GitHub Actions
 
 **Durée estimée :** 2h30
-**Prérequis :** Atelier 1 terminé (backend et frontend avec tests)
+**Prérequis :** TP 1 terminé (backend et frontend avec tests)
 
 ## 🎯 Objectifs de l'Atelier
 
@@ -26,7 +26,7 @@
 
 **CD (Continuous Deployment) :**
 
-- Déploiement Continu (Atelier 3)
+- Déploiement Continu (TP 3)
 - Si les tests passent, déploiement automatique
 
 **GitHub Actions :**
@@ -620,13 +620,13 @@ Puis :
 
 ### Objectif
 
-Appliquer les concepts CI/CD sur les exercices Java de l'Atelier 1.
+Appliquer les concepts CI/CD sur les exercices Java de l'TP 1.
 
 ---
 
 ### Étape Bonus 1 : Rappel des Exercices Java
 
-Si vous avez fait les exercices BONUS de l'Atelier 1, vous avez 3 projets Java :
+Si vous avez fait les exercices BONUS de l'TP 1, vous avez 3 projets Java :
 
 ```
 java-exercises/
@@ -866,9 +866,9 @@ Vous devriez voir dans les logs :
 
 ---
 
-## 🚀 Prochaine Étape : Atelier 3
+## 🚀 Prochaine Étape : TP 3
 
-Dans l'Atelier 3, vous allez **déployer votre application** :
+Dans l'TP 3, vous allez **déployer votre application** :
 
 - Migrer vers PostgreSQL (base de données réelle)
 - Déployer sur Render (production)
@@ -878,4 +878,4 @@ Dans l'Atelier 3, vous allez **déployer votre application** :
 
 ---
 
-**Version 2.0** - Atelier 2 CI/CD Simplifié
+**Version 2.0** - TP 2 CI/CD Simplifié
