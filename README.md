@@ -33,13 +33,13 @@ cd edl-starter
 cd edl-starter
 ```
 
-## 📖 Suivre les Ateliers
+## 📖 Suivre les Travaux Pratiques
 
-### Atelier 1 : Tests Unitaires (3h)
+### TP 1 : Tests Unitaires (3h)
 
 **Objectif :** Apprendre à écrire des tests unitaires backend et frontend
 
-📄 **Documentation :** Voir [`docs/ATELIER-1.md`](../docs/ATELIER-1.md) ou [`docs/ATELIER-1.pdf`](../docs/ATELIER-1.pdf)
+📄 **Documentation :** Voir [`docs/TP-1.md`](../docs/TP-1.md) ou [`docs/TP-1.pdf`](../docs/TP-1.pdf)
 
 **Ce que vous allez faire :**
 - ✅ Installer les dépendances (UV ou pip)
@@ -64,11 +64,11 @@ npm run dev
 
 ---
 
-### Atelier 2 : CI/CD avec GitHub Actions (3h)
+### TP 2 : CI/CD avec GitHub Actions (3h)
 
 **Objectif :** Automatiser les tests avec GitHub Actions
 
-📄 **Documentation :** Voir [`docs/ATELIER-2.md`](../docs/ATELIER-2.md)
+📄 **Documentation :** Voir [`docs/TP-2.md`](../docs/TP-2.md)
 
 **Ce que vous allez faire :**
 - ✅ Créer un workflow GitHub Actions
@@ -78,11 +78,11 @@ npm run dev
 
 ---
 
-### Atelier 3 : Déploiement + Database (3h)
+### TP 3 : Déploiement + Database (3h)
 
 **Objectif :** Déployer l'application en production avec PostgreSQL
 
-📄 **Documentation :** Voir [`docs/ATELIER-3.md`](../docs/ATELIER-3.md)
+📄 **Documentation :** Voir [`docs/TP-3.md`](../docs/TP-3.md)
 
 **Ce que vous allez faire :**
 - ✅ Migrer de stockage en mémoire vers PostgreSQL
@@ -119,7 +119,7 @@ edl-starter/
 │   └── vite.config.ts
 │
 ├── .github/
-│   └── workflows/           # Workflows à créer dans Atelier 2
+│   └── workflows/           # Workflows à créer dans TP 2
 │
 └── README.md (ce fichier)
 ```
@@ -174,9 +174,9 @@ npm run dev
 
 ### Backend
 
-Le backend utilise un **stockage en mémoire** (dictionnaire Python) pour les Ateliers 1 et 2.
+Le backend utilise un **stockage en mémoire** (dictionnaire Python) pour les TP 1 et 2.
 
-**Atelier 3 :** Vous migrerez vers PostgreSQL.
+**TP 3 :** Vous migrerez vers PostgreSQL.
 
 **Fichier de config :** `backend/.env.example`
 
@@ -262,15 +262,15 @@ npm test -- --reporter=verbose
 
 ## 📝 Notes Importantes
 
-### Stockage en Mémoire (Ateliers 1-2)
+### Stockage en Mémoire (TP 1-2)
 
 ⚠️ Les données sont **stockées en mémoire** (dictionnaire Python). Si vous redémarrez le backend, **toutes les données sont perdues**.
 
 C'est **intentionnel** pour simplifier l'apprentissage des tests unitaires.
 
-### Migration vers PostgreSQL (Atelier 3)
+### Migration vers PostgreSQL (TP 3)
 
-Dans l'Atelier 3, vous allez :
+Dans le TP 3, vous allez :
 1. Créer une base de données PostgreSQL
 2. Configurer SQLAlchemy
 3. Migrer le code pour utiliser la DB
@@ -280,7 +280,7 @@ Dans l'Atelier 3, vous allez :
 
 ## 📧 Support
 
-**Problèmes avec les ateliers ?**
+**Problèmes avec les travaux pratiques ?**
 
 1. Vérifiez la documentation dans `docs/`
 2. Relisez la section "🆘 Problèmes Courants"
@@ -288,6 +288,6 @@ Dans l'Atelier 3, vous allez :
 
 ---
 
-**Bon courage pour les ateliers ! 🚀**
+**Bon courage pour les travaux pratiques ! 🚀**
 
 Version: 1.0 - EDL 2024-2025

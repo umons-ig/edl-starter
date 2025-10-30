@@ -3,8 +3,8 @@ TaskFlow Backend - FastAPI Task Management Service
 
 A RESTful API for task management with TDD approach.
 
-ATELIER 1 & 2: Uses in-memory storage for simplicity
-ATELIER 3: Will introduce PostgreSQL database (see migration guide)
+TP 1 & 2: Uses in-memory storage for simplicity
+TP 3: Will introduce PostgreSQL database (see migration guide)
 """
 
 from typing import List, Optional, Dict

@@ -1,5 +1,5 @@
-site_name: EDL - Ateliers de Développement Logiciel
-site_description: Ateliers pratiques sur les tests unitaires, CI/CD et déploiement
+site_name: EDL - Expertises digitale et logicielle
+site_description: Travaux pratiques sur les tests unitaires, CI/CD et déploiement
 site_author: UMONS - Faculté des Sciences
 repo_url: https://github.com/umons-ig/edl-starter
 repo_name: umons-ig/edl-starter
@@ -50,6 +50,6 @@ markdown_extensions:
 
 nav:
   - Accueil: index.md
-  - Atelier 1: ATELIER-1.md
-  - Atelier 2: ATELIER-2.md
-  - Atelier 3: ATELIER-3.md
+  - TP 1: TP-1.md
+  - TP 2: TP-2.md
+  - TP 3: TP-3.md

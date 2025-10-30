@@ -16,7 +16,7 @@ Ces travaux pratiques vous apprendront les **pratiques** du développement logic
 
 ## 📚 Les 3 Travaux Pratiques
 
-### [TP 1 : Tests Unitaires Backend & Frontend](ATELIER-1.md)
+### [TP 1 : Tests Unitaires Backend & Frontend](TP-1.md)
 
 **Objectif :** Maîtriser les tests unitaires avec pytest (Python) et Vitest (TypeScript)
 
@@ -32,7 +32,7 @@ Ces travaux pratiques vous apprendront les **pratiques** du développement logic
 
 ---
 
-### [TP 2 : CI/CD avec GitHub Actions](ATELIER-2.md)
+### [TP 2 : CI/CD avec GitHub Actions](TP-2.md)
 
 **Objectif :** Automatiser les tests et le déploiement avec GitHub Actions
 
@@ -49,7 +49,7 @@ Ces travaux pratiques vous apprendront les **pratiques** du développement logic
 
 ---
 
-### [TP 3 : Déploiement en Production](ATELIER-3.md)
+### [TP 3 : Déploiement en Production](TP-3.md)
 
 **Objectif :** Déployer l'application sur Render avec PostgreSQL
 
@@ -127,4 +127,4 @@ TP 1 (Tests) → TP 2 (CI/CD) → TP 3 (Déploiement)
 
 ---
 
-**Prêt à commencer ?** 👉 [TP 1 : Tests Unitaires](ATELIER-1.md)
+**Prêt à commencer ?** 👉 [TP 1 : Tests Unitaires](TP-1.md)
