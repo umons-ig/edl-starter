@@ -6,12 +6,15 @@
 
 **Objectif principal :** Automatiser les tests avec GitHub Actions
 
-À la fin de cet atelier, vous aurez **construit** :
+À la fin de cet atelier, vous aurez :
 
-1. ✅ Un **workflow backend** qui teste automatiquement votre code Python
-2. ✅ Un **workflow frontend** qui teste et build votre code TypeScript
+1. ✅ Créé un **workflow backend** qui teste automatiquement votre code Python
+2. ✅ Créé un **workflow frontend** qui teste et build votre code TypeScript
 3. ✅ Compris comment **déboguer** un workflow qui échoue
-4. ✅ Créé votre premier **pipeline CI/CD** complet
+4. ✅ Optimisé vos workflows avec le **cache**
+5. ✅ Créé des **workflows réutilisables** et des **pipelines CI**
+6. ✅ Séparé les **tests rapides** (unitaires) des **tests lents** (E2E)
+7. ✅ Ajouté des **badges de status** à votre README
 
 ---
 
@@ -36,9 +39,7 @@
 
 ---
 
-## Phase 1 : Comprendre GitHub Actions
-
-### Étape 1.1 : Anatomie d'un Workflow
+## 📚 Structure d'un Workflow GitHub Actions
 
 Un workflow GitHub Actions est un fichier **YAML** dans `.github/workflows/`.
 
@@ -49,800 +50,549 @@ name: Mon Workflow          # 1️⃣ Nom affiché dans GitHub
 
 on:                         # 2️⃣ Quand s'exécute-t-il ?
   push:
-    branches: [main]        # Sur push vers main
+    branches: [main]
   pull_request:
-    branches: [main]        # Sur pull request vers main
+    branches: [main]
 
 jobs:                       # 3️⃣ Les tâches à faire
-  test:                     # Nom du job
-    runs-on: ubuntu-latest  # 4️⃣ Machine virtuelle Linux
-
-    steps:                  # 5️⃣ Les étapes du job
-      - name: Récupérer le code
-        uses: actions/checkout@v4    # ✅ Action pré-faite
-
-      - name: Lancer les tests
-        run: pytest                  # ✅ Commande shell
+  test:
+    runs-on: ubuntu-latest  # 4️⃣ Machine virtuelle
+    steps:                  # 5️⃣ Les étapes
+      - uses: actions/checkout@v4
+      - run: pytest
 ```
 
 **Concepts clés :**
 
-1. **`name`** : Le nom qui apparaît sur GitHub
-2. **`on`** : Les déclencheurs (push, pull_request, schedule, etc.)
-3. **`jobs`** : Les tâches (peuvent s'exécuter en parallèle)
-4. **`runs-on`** : Le système d'exploitation (ubuntu, windows, macos)
-5. **`steps`** : Les étapes du job (séquentielles)
-
-**Deux types de steps :**
-
-- **`uses`** : Utilise une action pré-faite (ex: `actions/checkout@v4`)
-- **`run`** : Exécute une commande shell (ex: `pytest`)
+- **`name`** : Nom du workflow
+- **`on`** : Déclencheurs (push, pull_request, etc.)
+- **`jobs`** : Tâches parallèles
+- **`steps`** : Étapes séquentielles
+- **`uses`** : Action pré-faite
+- **`run`** : Commande shell
 
 ---
 
-### Étape 1.2 : Où Trouver les Actions ?
+## ✍️ Exercice 1 : Workflow Backend
 
-**Actions officielles GitHub :**
+### Objectif
 
-- `actions/checkout@v4` - Clone le repo
-- `actions/setup-python@v5` - Installe Python
-- `actions/setup-node@v4` - Installe Node.js
+Créer un workflow qui teste automatiquement le backend à chaque push.
 
-**Marketplace :**
+### Instructions
 
-- <https://github.com/marketplace?type=actions>
-- Des milliers d'actions pré-faites
+1. **Créez la structure des workflows :**
 
-**Documentation :**
+   ```bash
+   mkdir -p .github/workflows
+   ```
 
-- <https://docs.github.com/en/actions>
+2. **Créez le fichier `.github/workflows/backend.yml`**
 
----
+3. **Configurez le workflow avec :**
+   - Nom : "Backend Tests"
+   - Déclencheurs : push et pull_request sur `main`
+   - Job nommé "test" qui s'exécute sur `ubuntu-latest`
 
-## Phase 2 : Workflow Backend
+4. **Ajoutez les étapes suivantes (dans l'ordre) :**
+   - Récupérer le code avec `actions/checkout@v4`
+   - Installer Python 3.11 avec `actions/setup-python@v5`
+   - Installer UV :
 
-### Étape 2.1 : Créer le Fichier Workflow
+     ```bash
+     curl -LsSf https://astral.sh/uv/install.sh | sh
+     echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+     ```
 
-```bash
-mkdir -p .github/workflows
-touch .github/workflows/backend.yml
-```
+   - Installer les dépendances : `cd backend && uv sync`
+   - Lancer les tests : `cd backend && uv run pytest -v --cov`
 
-### Étape 2.2 : Écrire le Workflow Backend
+5. **Testez localement avant de pousser :**
 
-Ouvrez `.github/workflows/backend.yml` et copiez ce contenu :
+   ```bash
+   cd backend
+   uv run pytest -v --cov
+   ```
 
-```yaml
-name: Backend Tests
+6. **Poussez et vérifiez sur GitHub Actions :**
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+   ```bash
+   git add .github/workflows/backend.yml
+   git commit -m "ci: add backend workflow"
+   git push origin main
+   ```
 
-jobs:
-  test:
-    name: Test Backend
-    runs-on: ubuntu-latest
+### ✅ Résultat attendu
 
-    steps:
-      # Étape 1 : Récupérer le code
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      # Étape 2 : Installer Python
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # Étape 3 : Installer UV
-      - name: 📦 Install UV
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      # Étape 4 : Installer les dépendances
-      - name: 📚 Install dependencies
-        run: |
-          cd backend
-          uv sync
-
-      # Étape 5 : Lancer les tests
-      - name: 🧪 Run tests
-        run: |
-          cd backend
-          uv run pytest -v --cov
-```
-
-### Étape 2.3 : Comprendre Chaque Ligne
-
-**Ligne par ligne :**
-
-```yaml
-name: Backend Tests           # Nom affiché dans l'onglet Actions
-```
-
-```yaml
-on:
-  push:
-    branches: [main]          # Déclenche sur push vers main
-  pull_request:
-    branches: [main]          # Déclenche sur PR vers main
-```
-
-```yaml
-jobs:
-  test:                       # ID du job
-    name: Test Backend        # Nom affiché
-    runs-on: ubuntu-latest    # Ubuntu (gratuit et rapide)
-```
-
-```yaml
-steps:
-  - name: 📥 Checkout code
-    uses: actions/checkout@v4  # Clone le repo
-```
-
-**Pourquoi `actions/checkout@v4` ?**
-
-- Sans ça, GitHub Actions ne voit pas votre code !
-- C'est toujours la première étape
-
-```yaml
-  - name: 🐍 Setup Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.11'   # Version Python
-```
-
-```yaml
-  - name: 📦 Install UV
-    run: |
-      curl -LsSf https://astral.sh/uv/install.sh | sh
-      echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-```
-
-**Explication :**
-
-- `curl -LsSf ... | sh` : Télécharge et installe UV
-- `echo "$HOME/.cargo/bin" >> $GITHUB_PATH` : Ajoute UV au PATH pour les étapes suivantes
-- Sans cette ligne, `uv` ne serait pas trouvé dans les étapes suivantes
-
-```yaml
-  - name: 📚 Install dependencies
-    run: |                     # | permet plusieurs lignes
-      cd backend
-      uv sync
-```
-
-```yaml
-  - name: 🧪 Run tests
-    run: |
-      cd backend
-      uv run pytest -v --cov
-```
-
-**Important :** Ce sont les **mêmes commandes** que vous exécutez localement !
-
----
-
-### Étape 2.4 : Tester Localement Avant de Pousser
-
-Avant de pousser, vérifiez que ça marche localement :
-
-```bash
-cd backend
-uv run pytest -v --cov
-```
-
-✅ Si ça passe localement, ça devrait passer sur GitHub !
-
----
-
-### Étape 2.5 : Pousser et Observer
-
-```bash
-git add .github/workflows/backend.yml
-git commit -m "ci: add backend workflow"
-git push origin main
-```
-
-**Observer sur GitHub :**
-
-1. Allez sur votre repo GitHub
-2. Cliquez sur l'onglet **Actions**
-3. Vous verrez votre workflow en cours d'exécution
-4. Cliquez dessus pour voir les détails
-
-**Résultat attendu :**
+Dans l'onglet "Actions" sur GitHub, vous devriez voir :
 
 ```
 ✅ Backend Tests
-  └─ Test Backend
-      ├─ 📥 Checkout code
-      ├─ 🐍 Setup Python
-      ├─ 📦 Install UV
-      ├─ 📚 Install dependencies
-      └─ 🧪 Run tests
+  └─ test
+      ├─ Checkout code
+      ├─ Setup Python
+      ├─ Install UV
+      ├─ Install dependencies
+      └─ Run tests
 ```
 
 ---
 
-## Phase 3 : Workflow Frontend
+## ✍️ Exercice 2 : Workflow Frontend
 
-### Étape 3.1 : Créer le Workflow Frontend
+### Objectif
 
-```bash
-touch .github/workflows/frontend.yml
-```
+Créer un workflow qui teste et build le frontend automatiquement.
 
-### Étape 3.2 : Écrire le Workflow Frontend
+### Instructions
 
-Ouvrez `.github/workflows/frontend.yml` :
+1. **Créez le fichier `.github/workflows/frontend.yml`**
 
-```yaml
-name: Frontend Tests
+2. **Configurez le workflow similairement au backend :**
+   - Nom : "Frontend Tests"
+   - Mêmes déclencheurs que le backend
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+3. **Ajoutez les étapes suivantes :**
+   - Récupérer le code
+   - Installer Node.js 18 avec `actions/setup-node@v4`
+     - Activez le cache npm : `cache: 'npm'`
+     - Spécifiez le chemin : `cache-dependency-path: frontend/package-lock.json`
+   - Installer les dépendances : `cd frontend && npm ci`
+   - Lancer les tests : `cd frontend && npm test -- --run`
+   - Vérifier le build : `cd frontend && npm run build`
 
-jobs:
-  test:
-    name: Test Frontend
-    runs-on: ubuntu-latest
+4. **Testez localement :**
 
-    steps:
-      # Étape 1 : Récupérer le code
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
+   ```bash
+   cd frontend
+   npm test -- --run
+   npm run build
+   ```
 
-      # Étape 2 : Installer Node.js
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+5. **Poussez et vérifiez :**
 
-      # Étape 3 : Installer les dépendances
-      - name: 📦 Install dependencies
-        run: |
-          cd frontend
-          npm ci
+   ```bash
+   git add .github/workflows/frontend.yml
+   git commit -m "ci: add frontend workflow"
+   git push origin main
+   ```
 
-      # Étape 4 : Lancer les tests
-      - name: 🧪 Run tests
-        run: |
-          cd frontend
-          npm test -- --run
+### ✅ Résultat attendu
 
-      # Étape 5 : Vérifier le build
-      - name: 🏗️ Build check
-        run: |
-          cd frontend
-          npm run build
-```
-
-### Étape 3.3 : Comprendre les Différences avec le Backend
-
-**`npm ci` vs `npm install` :**
-
-```yaml
-- name: 📦 Install dependencies
-  run: npm ci    # ✅ Plus rapide et déterministe (pour CI)
-```
-
-- `npm ci` : Installe exactement ce qui est dans `package-lock.json`
-- `npm install` : Peut mettre à jour les versions (moins fiable)
-
-**Cache npm :**
-
-```yaml
-- name: 🟢 Setup Node.js
-  uses: actions/setup-node@v4
-  with:
-    cache: 'npm'   # ✅ Met en cache node_modules
-```
-
-Accélère les builds (évite de re-télécharger chaque fois).
-
-**Tests en mode "run once" :**
-
-```yaml
-npm test -- --run   # ✅ Lance les tests une fois (pas en mode watch)
-```
-
-**Build check :**
-
-```yaml
-npm run build   # ✅ Vérifie que le build fonctionne (détecte les erreurs TypeScript)
-```
-
----
-
-### Étape 3.4 : Pousser et Observer
-
-```bash
-git add .github/workflows/frontend.yml
-git commit -m "ci: add frontend workflow"
-git push origin main
-```
-
-**Vous verrez maintenant 2 workflows en parallèle :**
+Vous devriez voir **2 workflows en parallèle** :
 
 ```
 ✅ Backend Tests
 ✅ Frontend Tests
 ```
 
-**Les deux s'exécutent en même temps !** 🚀
+### 💡 Note importante
+
+**`npm ci` vs `npm install` :**
+
+- `npm ci` : Installe exactement ce qui est dans `package-lock.json` (déterministe)
+- `npm install` : Peut mettre à jour les versions (moins fiable pour CI)
 
 ---
 
-## Phase 4 : Déboguer un Échec Volontaire
-
-### Étape 4.1 : Pourquoi Apprendre à Déboguer ?
-
-**Dans la vraie vie :**
-
-- ❌ Les workflows échouent souvent
-- 🔍 Il faut savoir lire les logs
-- 🐛 Reproduire localement pour corriger
-
-**Apprenons en cassant quelque chose exprès !**
-
----
-
-### ✍️ Exercice : Introduire un Bug
-
-**Objectif :** Modifier un test pour qu'il échoue volontairement.
-
-Ouvrez `backend/tests/test_api.py` et **modifiez** le test `test_health_check` :
-
-```python
-def test_health_check(client):
-    """The health endpoint should confirm the API is running."""
-    response = client.get("/health")
-
-    assert response.status_code == 200
-    assert response.json()["status"] == "BROKEN"  # ❌ Volontairement faux !
-```
-
-**Pourquoi "BROKEN" ?**
-
-- Le vrai statut est `"healthy"`
-- Ce test va échouer !
-
-**Pousser le bug :**
-
-```bash
-git add backend/tests/test_api.py
-git commit -m "test: intentional failure for learning"
-git push origin main
-```
-
----
-
-### Étape 4.2 : Observer l'Échec
-
-**Sur GitHub Actions :**
-
-1. Allez dans l'onglet **Actions**
-2. Vous verrez ❌ **Backend Tests** en rouge
-3. Cliquez dessus
-
-**Vous verrez :**
-
-```
-❌ Backend Tests
-  └─ Test Backend
-      ├─ ✅ 📥 Checkout code
-      ├─ ✅ 🐍 Setup Python
-      ├─ ✅ 📦 Install UV
-      ├─ ✅ 📚 Install dependencies
-      └─ ❌ 🧪 Run tests  ← ICI LE PROBLÈME
-```
-
----
-
-### Étape 4.3 : Analyser les Logs
-
-**Cliquez sur l'étape "🧪 Run tests".**
-
-**Vous verrez les logs :**
-
-```
-tests/test_api.py::test_health_check FAILED
-
-================================ FAILURES ================================
-_________________________ test_health_check __________________________
-
-client = <starlette.testclient.TestClient object at 0x...>
-
-    def test_health_check(client):
-        response = client.get("/health")
-        assert response.status_code == 200
->       assert response.json()["status"] == "BROKEN"
-E       AssertionError: assert 'healthy' == 'BROKEN'
-E         - BROKEN
-E         + healthy
-
-tests/test_api.py:20: AssertionError
-======================== short test summary info ========================
-FAILED tests/test_api.py::test_health_check - AssertionError: ...
-======================== 1 failed, 18 passed in 0.52s ====================
-```
-
-**Questions à se poser :**
-
-1. **Quel test échoue ?** → `test_health_check`
-2. **Quelle ligne ?** → `tests/test_api.py:20`
-3. **Quelle est l'erreur ?** → Attend "BROKEN", reçoit "healthy"
-4. **Comment reproduire localement ?**
-
----
-
-### Étape 4.4 : Reproduire Localement
-
-**Même commande que dans le workflow :**
-
-```bash
-cd backend
-uv run pytest tests/test_api.py::test_health_check -v
-```
-
-**Vous verrez la même erreur !**
-
-```
-FAILED tests/test_api.py::test_health_check - AssertionError: assert 'healthy' == 'BROKEN'
-```
-
-**Maintenant corrigez :**
-
-```python
-def test_health_check(client):
-    """The health endpoint should confirm the API is running."""
-    response = client.get("/health")
-
-    assert response.status_code == 200
-    assert response.json()["status"] == "healthy"  # ✅ Correct !
-```
-
-**Vérifiez localement :**
-
-```bash
-uv run pytest tests/test_api.py::test_health_check -v
-```
-
-✅ **Le test passe !**
-
----
-
-### Étape 4.5 : Pousser la Correction
-
-```bash
-git add backend/tests/test_api.py
-git commit -m "fix: correct health check assertion"
-git push origin main
-```
-
-**Sur GitHub Actions :**
-
-```
-✅ Backend Tests  ← De nouveau vert !
-```
-
----
-
-### Étape 4.6 : Leçons Apprises
-
-**Ce que vous avez appris :**
-
-1. ✅ Lire les logs GitHub Actions
-2. ✅ Identifier la ligne qui échoue
-3. ✅ Reproduire l'erreur localement
-4. ✅ Corriger et vérifier
-5. ✅ Re-pousser
-
-**Principe clé : Si ça passe localement, ça passera sur GitHub !**
-
----
-
-## Phase 5 : Vérification Finale
-
-### Étape 5.1 : Créer une Pull Request
-
-**Pourquoi une PR ?**
-
-Les workflows s'exécutent aussi sur les Pull Requests !
-
-**Créer une branche :**
-
-```bash
-git checkout -b feature/test-pr
-```
-
-**Faire un petit changement :**
-
-```python
-# Dans backend/src/app.py
-@app.get("/")
-async def root():
-    return {
-        "message": "Welcome to TaskFlow API v2.0",  # Changé !
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
-```
-
-**Pousser la branche :**
-
-```bash
-git add backend/src/app.py
-git commit -m "feat: update welcome message"
-git push origin feature/test-pr
-```
-
-**Créer la PR sur GitHub :**
-
-1. Allez sur votre repo GitHub
-2. Cliquez sur **"Compare & pull request"**
-3. Créez la PR
-
-**Vous verrez les checks s'exécuter :**
-
-```
-⏳ Backend Tests — In progress
-⏳ Frontend Tests — In progress
-```
-
-Puis :
-
-```
-✅ Backend Tests — Passed
-✅ Frontend Tests — Passed
-✅ All checks have passed
-```
-
-**Vous pouvez maintenant merger en toute confiance !**
-
----
-
-## 🎁 BONUS : Workflow Java
-
-**Pour les étudiants qui ont terminé les 5 phases principales.**
+## ✍️ Exercice 3 : Déboguer un Échec
 
 ### Objectif
 
-Appliquer les concepts CI/CD sur les exercices Java de l'TP 1.
+Apprendre à lire les logs et corriger les erreurs de workflow.
+
+### Instructions
+
+1. **Introduisez volontairement un bug dans `backend/tests/test_api.py` :**
+
+   ```python
+   def test_health_check(client):
+       response = client.get("/health")
+       assert response.status_code == 200
+       assert response.json()["status"] == "BROKEN"  # ❌ Faux exprès !
+   ```
+
+2. **Poussez le bug :**
+
+   ```bash
+   git add backend/tests/test_api.py
+   git commit -m "test: intentional failure for learning"
+   git push origin main
+   ```
+
+3. **Observez l'échec sur GitHub Actions :**
+   - Allez dans "Actions"
+   - Cliquez sur le workflow ❌ rouge
+   - Cliquez sur l'étape "Run tests"
+
+4. **Analysez les logs :**
+   - Quel test échoue ?
+   - À quelle ligne ?
+   - Quelle est l'erreur exacte ?
+
+5. **Reproduisez localement :**
+
+   ```bash
+   cd backend
+   uv run pytest tests/test_api.py::test_health_check -v
+   ```
+
+6. **Corrigez le bug :**
+
+   ```python
+   assert response.json()["status"] == "healthy"  # ✅ Correct
+   ```
+
+7. **Vérifiez localement puis poussez :**
+
+   ```bash
+   uv run pytest tests/test_api.py::test_health_check -v
+   git add backend/tests/test_api.py
+   git commit -m "fix: correct health check assertion"
+   git push origin main
+   ```
+
+### ✅ Leçon apprise
+
+**Si ça passe localement, ça passera sur GitHub !**
 
 ---
 
-### Étape Bonus 1 : Rappel des Exercices Java
+## ✍️ Exercice 4 : Optimiser avec le Cache
 
-Si vous avez fait les exercices BONUS de l'TP 1, vous avez 3 projets Java :
+### Objectif
+
+Réduire le temps d'exécution de 2-3 minutes à ~30 secondes en utilisant le cache.
+
+### Instructions
+
+1. **Modifiez `.github/workflows/backend.yml`**
+
+2. **Ajoutez une étape de cache APRÈS l'installation de Python :**
+
+   ```yaml
+   - name: 💾 Cache UV dependencies
+     uses: actions/cache@v4
+     with:
+       path: ~/.cache/uv
+       key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml', 'backend/uv.lock') }}
+       restore-keys: |
+         ${{ runner.os }}-uv-
+   ```
+
+3. **Comprenez la clé du cache :**
+   - `${{ runner.os }}` : OS (Linux)
+   - `${{ hashFiles(...) }}` : Hash des fichiers de dépendances
+   - Le cache change seulement si vous ajoutez/retirez une dépendance
+
+4. **Testez en poussant deux fois :**
+
+   ```bash
+   # Premier push - cache vide
+   git add .github/workflows/backend.yml
+   git commit -m "ci: add UV cache"
+   git push
+
+   # Deuxième push - cache restauré
+   echo "# Test cache" >> README.md
+   git add README.md
+   git commit -m "test: trigger workflow"
+   git push
+   ```
+
+5. **Observez la différence :**
+   - 1ère exécution : "Cache not found" → télécharge tout (~2 min)
+   - 2ème exécution : "Cache restored" → utilise le cache (~30 sec)
+
+### ✅ Résultat
+
+**Temps gagné : ~2 minutes par build !** ⚡
+
+---
+
+## ✍️ Exercice 5 : Workflows Réutilisables
+
+### Objectif
+
+Créer un pipeline CI global qui orchestre backend et frontend.
+
+### Instructions
+
+1. **Rendez vos workflows réutilisables :**
+
+   Dans `backend.yml` et `frontend.yml`, ajoutez `workflow_call` aux déclencheurs :
+
+   ```yaml
+   on:
+     push:
+       branches: [main]
+     pull_request:
+       branches: [main]
+     workflow_call:  # ✨ Nouveau !
+   ```
+
+2. **Créez `.github/workflows/ci-pipeline.yml` :**
+
+   ```yaml
+   name: CI Pipeline
+
+   on:
+     push:
+       branches: [main]
+     pull_request:
+       branches: [main]
+
+   jobs:
+     backend:
+       name: Backend Tests
+       uses: ./.github/workflows/backend.yml
+
+     frontend:
+       name: Frontend Tests
+       uses: ./.github/workflows/frontend.yml
+
+     summary:
+       name: All Tests Passed
+       needs: [backend, frontend]
+       runs-on: ubuntu-latest
+       steps:
+         - name: 🎉 Success
+           run: echo "🎉 Tous les tests sont passés !"
+   ```
+
+3. **Poussez et observez :**
+
+   ```bash
+   git add .github/workflows/
+   git commit -m "ci: add reusable workflows and pipeline"
+   git push origin main
+   ```
+
+### ✅ Résultat
+
+Vous verrez maintenant **3 workflows** :
 
 ```
-java-exercises/
-├── calculator/        # Calculatrice avec opérations de base
-├── string-utils/      # Manipulation de chaînes
-└── bank-account/      # Gestion de compte bancaire
+✅ Backend Tests
+✅ Frontend Tests
+✅ CI Pipeline (résumé global)
+```
+
+Le job `summary` attend que backend **ET** frontend soient terminés avant de s'exécuter.
+
+---
+
+## ✍️ Exercice 6 : Séparer Tests Unitaires et E2E
+
+### Objectif
+
+Exécuter les tests rapides (unitaires) sur toutes les branches, mais les tests lents (E2E) seulement sur `main`.
+
+### Instructions
+
+**Partie 1 : Marquer les tests E2E**
+
+1. **Dans `backend/tests/conftest.py`, ajoutez :**
+
+   ```python
+   def pytest_configure(config):
+       """Enregistre les markers personnalisés"""
+       config.addinivalue_line(
+           "markers",
+           "e2e: mark test as end-to-end test (slow)"
+       )
+   ```
+
+2. **Dans `backend/tests/test_api.py`, créez un test E2E :**
+
+   ```python
+   import pytest
+
+   @pytest.mark.e2e
+   def test_complete_task_lifecycle(client):
+       """Test E2E : CRUD complet d'une tâche."""
+       # Créer
+       response = client.post("/tasks", json={
+           "title": "Test E2E",
+           "description": "Test complet"
+       })
+       assert response.status_code == 201
+       task_id = response.json()["id"]
+
+       # Lire
+       response = client.get(f"/tasks/{task_id}")
+       assert response.status_code == 200
+
+       # Mettre à jour
+       response = client.put(f"/tasks/{task_id}", json={
+           "title": "Updated",
+           "description": "Modified"
+       })
+       assert response.status_code == 200
+
+       # Supprimer
+       response = client.delete(f"/tasks/{task_id}")
+       assert response.status_code == 204
+
+       # Vérifier suppression
+       response = client.get(f"/tasks/{task_id}")
+       assert response.status_code == 404
+   ```
+
+3. **Testez localement les différentes commandes :**
+
+   ```bash
+   cd backend
+   # Tests unitaires seulement
+   uv run pytest -v -m "not e2e"
+
+   # Tests E2E seulement
+   uv run pytest -v -m "e2e"
+
+   # Tous les tests
+   uv run pytest -v
+   ```
+
+**Partie 2 : Créer le workflow séparé**
+
+4. **Créez `.github/workflows/backend-split.yml` avec 2 jobs :**
+
+   - **Job 1 : unit-tests** (toujours)
+     - Exécute : `pytest -v -m "not e2e"`
+
+   - **Job 2 : e2e-tests** (seulement sur main)
+     - Ajoute la condition : `if: github.ref == 'refs/heads/main'`
+     - Exécute : `pytest -v -m "e2e"`
+
+5. **Testez avec une Pull Request :**
+
+   ```bash
+   git checkout -b test/split-tests
+   echo "# Test" >> README.md
+   git add .
+   git commit -m "test: verify E2E don't run on PR"
+   git push origin test/split-tests
+   ```
+
+### ✅ Résultat attendu
+
+- **Sur PR** : Seulement "Unit Tests" s'exécute
+- **Sur main** : "Unit Tests" **ET** "E2E Tests" s'exécutent
+
+---
+
+## ✍️ Exercice 7 : Chaîne de Jobs Frontend
+
+### Objectif
+
+Créer une chaîne Lint → Test → Build pour optimiser le feedback.
+
+### Instructions
+
+1. **Créez `.github/workflows/frontend-chain.yml` avec 3 jobs :**
+
+   **Job 1 : lint**
+   - Installe les dépendances
+   - Exécute : `npm run lint`
+
+   **Job 2 : test**
+   - Dépend de `lint` avec `needs: lint`
+   - Installe les dépendances
+   - Exécute : `npm test -- --run`
+
+   **Job 3 : build**
+   - Dépend de `test` avec `needs: test`
+   - Installe les dépendances
+   - Exécute : `npm run build`
+   - Upload les artifacts avec `actions/upload-artifact@v4` :
+
+     ```yaml
+     - name: 📤 Upload build artifacts
+       uses: actions/upload-artifact@v4
+       with:
+         name: frontend-build
+         path: frontend/dist/
+     ```
+
+2. **Poussez et observez :**
+
+   ```bash
+   git add .github/workflows/frontend-chain.yml
+   git commit -m "ci: add frontend chain"
+   git push origin main
+   ```
+
+### ✅ Avantages
+
+- Si lint échoue → tests et build ne s'exécutent pas
+- Feedback plus rapide (lint = 10s vs build = 2min)
+- Build artifacts disponibles pour téléchargement
+
+---
+
+## ✍️ Exercice 8 : Badges de Status
+
+### Objectif
+
+Afficher le statut des workflows dans votre README.
+
+### Instructions
+
+1. **Modifiez `README.md` et ajoutez au début :**
+
+   ```markdown
+   # TaskFlow API
+
+   ![Backend Tests](https://github.com/VOTRE_NOM/VOTRE_REPO/workflows/Backend%20Tests/badge.svg)
+   ![Frontend Tests](https://github.com/VOTRE_NOM/VOTRE_REPO/workflows/Frontend%20Tests/badge.svg)
+   ![CI Pipeline](https://github.com/VOTRE_NOM/VOTRE_REPO/workflows/CI%20Pipeline/badge.svg)
+   ```
+
+2. **Remplacez :**
+   - `VOTRE_NOM` → Votre username GitHub
+   - `VOTRE_REPO` → Nom de votre repo
+
+3. **Poussez :**
+
+   ```bash
+   git add README.md
+   git commit -m "docs: add CI badges"
+   git push origin main
+   ```
+
+### ✅ Résultat
+
+Sur GitHub, vous verrez des badges qui se mettent à jour automatiquement :
+
+```
+✅ Backend Tests  ✅ Frontend Tests  ✅ CI Pipeline
 ```
 
 ---
 
-### Étape Bonus 2 : Créer le Workflow Java
+## 📋 Récapitulatif
 
-Créez `.github/workflows/java.yml` :
+Félicitations ! Vous avez maintenant :
 
-```yaml
-name: Java Tests (Optional)
+✅ **Exercice 1** : Workflow backend automatisé
+✅ **Exercice 2** : Workflow frontend automatisé
+✅ **Exercice 3** : Compétences en débogage de workflows
+✅ **Exercice 4** : Cache UV pour optimiser les builds
+✅ **Exercice 5** : Pipeline CI global avec workflows réutilisables
+✅ **Exercice 6** : Séparation tests unitaires / E2E
+✅ **Exercice 7** : Chaîne de jobs frontend optimisée
+✅ **Exercice 8** : Badges de status dans le README
 
-# Workflow optionnel pour les exercices bonus Java
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'java-exercises/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'java-exercises/**'
-  workflow_dispatch:  # Permet lancement manuel
-
-jobs:
-  test:
-    name: Test Java Exercises
-    runs-on: ubuntu-latest
-
-    steps:
-      # Étape 1 : Récupérer le code
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      # Étape 2 : Installer Java
-      - name: ☕ Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      # Étape 3 : Tester Calculator
-      - name: 🧮 Test Calculator
-        working-directory: java-exercises/calculator
-        run: |
-          javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
-          java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore CalculatorTest
-
-      # Étape 4 : Tester String Utils
-      - name: 📝 Test String Utils
-        working-directory: java-exercises/string-utils
-        run: |
-          javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
-          java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore StringUtilsTest
-
-      # Étape 5 : Tester Bank Account
-      - name: 🏦 Test Bank Account
-        working-directory: java-exercises/bank-account
-        run: |
-          javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
-          java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore BankAccountTest
-```
-
----
-
-### Étape Bonus 3 : Comprendre les Différences
-
-**`paths:` - Déclenchement Conditionnel**
-
-```yaml
-on:
-  push:
-    paths:
-      - 'java-exercises/**'
-```
-
-➡️ Le workflow ne s'exécute **que** si vous modifiez des fichiers dans `java-exercises/`
-
-**`workflow_dispatch:` - Lancement Manuel**
-
-```yaml
-on:
-  workflow_dispatch:
-```
-
-➡️ Vous pouvez lancer le workflow manuellement depuis l'onglet **Actions** sur GitHub
-
-**`working-directory:` - Répertoire de Travail**
-
-```yaml
-- name: 🧮 Test Calculator
-  working-directory: java-exercises/calculator
-  run: |
-    javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
-```
-
-➡️ Définit le répertoire de travail pour toutes les commandes `run` de cette étape
-
-**Pourquoi `working-directory` au lieu de `cd` ?**
-
-- ✅ Plus propre et plus clair
-- ✅ Fonctionne mieux avec les chemins relatifs
-- ✅ Standard GitHub Actions
-
-**`javac` et `java` - Compilation et Exécution**
-
-```bash
-javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
-java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore CalculatorTest
-```
-
-- `-cp` : Classpath (où trouver JUnit)
-- `.:../lib/...` : Dossier actuel + JARs dans ../lib
-- `*.java` : Compile tous les fichiers Java
-- `JUnitCore` : Lance les tests JUnit
-
----
-
-### Étape Bonus 4 : Tester le Workflow
-
-**Option 1 : Push un changement Java**
-
-```bash
-# Modifier un fichier Java
-echo "// Test CI" >> java-exercises/calculator/Calculator.java
-
-git add java-exercises/
-git commit -m "test: trigger Java workflow"
-git push
-```
-
-**Option 2 : Lancement Manuel**
-
-1. Allez sur **Actions** dans GitHub
-2. Cliquez sur **Java Tests (Optional)**
-3. Cliquez sur **Run workflow**
-4. Sélectionnez la branche `main`
-5. Cliquez sur **Run workflow**
-
----
-
-### Étape Bonus 5 : Voir les Résultats
-
-Vous devriez voir dans les logs :
-
-```
-🧮 Test Calculator
-  Compiling...
-  Running tests...
-  JUnit version 4.13.2
-  ..........
-  Time: 0.012
-  OK (10 tests)
-
-📝 Test String Utils
-  ...
-
-🏦 Test Bank Account
-  ...
-```
-
-✅ **Tous vos exercices Java sont testés automatiquement !**
-
----
-
-### 🤔 Exercice de Réflexion
-
-**Pourquoi 3 workflows séparés (backend, frontend, java) plutôt qu'un seul ?**
-
-<details>
-<summary>Cliquez pour voir la réponse</summary>
-
-**Avantages :**
-
-1. ✅ **Parallélisation** : Les 3 workflows s'exécutent en parallèle → plus rapide
-2. ✅ **Débogage** : Si backend échoue, vous savez immédiatement où chercher
-3. ✅ **Optionnel** : Java ne s'exécute que si `java-exercises/` est modifié
-4. ✅ **Lisibilité** : Chaque workflow est simple et focalisé
-
-**Inconvénient :**
-
-1. ❌ Plus de fichiers à gérer (mais seulement 3)
-
-**En production, on préfère souvent plusieurs workflows ciblés plutôt qu'un seul monolithique.**
-
-</details>
+**Temps total estimé :** 4-5 heures
 
 ---
 
 ## 🐛 Erreurs Fréquentes
 
-### ❌ Workflow ne se déclenche pas
-
-**Cause :** Fichier mal placé ou syntaxe YAML invalide
-
-**Solution :** Vérifiez :
-
-- Le fichier est dans `.github/workflows/`
-- L'extension est `.yml` ou `.yaml`
-- Pas d'erreurs de syntaxe (indentation !)
-
 ### ❌ `uv: command not found`
 
-**Cause :** UV n'est pas dans le PATH après installation
-
-**Solution :** Ajoutez `echo "$HOME/.cargo/bin" >> $GITHUB_PATH` après l'installation de UV
-
-### ❌ `actions/checkout@v4` ne fonctionne pas
-
-**Cause :** Problème de permissions GitHub
-
-**Solution :** Ajoutez l'étape `actions/setup-node@v4`
+**Cause :** UV n'est pas dans le PATH
+**Solution :** Ajoutez `echo "$HOME/.cargo/bin" >> $GITHUB_PATH`
 
 ### ❌ Tests qui passent localement mais échouent sur GitHub
 
@@ -853,3 +603,112 @@ Vous devriez voir dans les logs :
 3. Timezone différente
 
 **Déboguer :** Reproduisez exactement les mêmes commandes localement
+
+### ❌ Cache qui ne fonctionne pas
+
+**Cause :** Mauvaise clé de cache
+**Solution :** Vérifiez que `hashFiles()` pointe vers les bons fichiers
+
+---
+
+## 🎁 BONUS : Workflow Java (Optionnel)
+
+**Pour les étudiants qui ont fait les exercices Java du TP 1.**
+
+### Objectif
+
+Tester automatiquement les 3 projets Java (calculator, string-utils, bank-account).
+
+### Instructions
+
+1. **Créez `.github/workflows/java.yml` :**
+
+```yaml
+name: Java Tests (Optional)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'java-exercises/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'java-exercises/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Java Exercises
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 🧮 Test Calculator
+        working-directory: java-exercises/calculator
+        run: |
+          javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
+          java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore CalculatorTest
+
+      - name: 📝 Test String Utils
+        working-directory: java-exercises/string-utils
+        run: |
+          javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
+          java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore StringUtilsTest
+
+      - name: 🏦 Test Bank Account
+        working-directory: java-exercises/bank-account
+        run: |
+          javac -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar *.java
+          java -cp .:../lib/junit-4.13.2.jar:../lib/hamcrest-core-1.3.jar org.junit.runner.JUnitCore BankAccountTest
+```
+
+### Nouveaux concepts
+
+**`paths:` - Déclenchement conditionnel**
+
+```yaml
+on:
+  push:
+    paths:
+      - 'java-exercises/**'
+```
+
+Le workflow ne s'exécute que si vous modifiez des fichiers Java.
+
+**`workflow_dispatch:` - Lancement manuel**
+Vous pouvez lancer le workflow manuellement depuis l'onglet Actions.
+
+**`working-directory:` - Répertoire de travail**
+
+```yaml
+- name: Test Calculator
+  working-directory: java-exercises/calculator
+```
+
+Plus propre que d'utiliser `cd` dans chaque commande.
+
+### Test
+
+**Option 1 : Modifier un fichier Java**
+
+```bash
+echo "// Test CI" >> java-exercises/calculator/Calculator.java
+git add java-exercises/
+git commit -m "test: trigger Java workflow"
+git push
+```
+
+**Option 2 : Lancement manuel**
+
+1. Allez dans "Actions" → "Java Tests (Optional)"
+2. Cliquez sur "Run workflow"
+3. Sélectionnez "main" et cliquez "Run workflow"
