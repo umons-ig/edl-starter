@@ -4,7 +4,7 @@
 
 ---
 
-## Phase 1 : Installation & Configuration (30 min)
+## Phase 1 : Installation & Configuration
 
 ### Étape 1.1 : Forker le Dépôt
 
@@ -268,7 +268,7 @@ uv run pytest tests/test_api.py::test_update_task -v
 
 ---
 
-### ✍️ Exercice 3 : Écrire un Test de Suppression Inexistante (10 min)
+### ✍️ Exercice 3 : Écrire un Test de Suppression Inexistante
 
 **🎯 Objectif :** Tester qu'on ne peut pas supprimer une tâche qui n'existe pas
 
@@ -295,7 +295,7 @@ uv run pytest tests/test_api.py::test_delete_nonexistent_task_returns_404 -v
 
 ---
 
-### ✍️ Exercice 4 : Écrire un Test de Validation (10 min)
+### ✍️ Exercice 4 : Écrire un Test de Validation
 
 **🎯 Objectif :** Tester qu'on ne peut pas mettre à jour une tâche avec une priorité invalide
 
@@ -324,7 +324,7 @@ uv run pytest tests/test_api.py::test_update_task_with_invalid_priority -v
 
 ---
 
-### ✍️ Exercice 5 : Écrire un Test de Filtrage (10 min)
+### ✍️ Exercice 5 : Écrire un Test de Filtrage
 
 **🎯 Objectif :** Tester le filtrage avec plusieurs critères
 
@@ -347,7 +347,7 @@ uv run pytest tests/test_api.py::test_filter_by_multiple_criteria -v
 
 ---
 
-### Étape 4.6 : Lancer TOUS les Tests (5 min)
+### Étape 4.6 : Lancer TOUS les Tests
 
 Une fois que vous avez terminé les 5 exercices, lancez tous les tests :
 
@@ -395,6 +395,8 @@ TOTAL                 156      6    96%
 ```
 
 **Note :** La couverture est très élevée (96%) car le backend est simple avec stockage en mémoire. Dans l'TP 3, vous ajouterez une base de données PostgreSQL.
+
+![Backend Coverage Report](img/backend-coverage.png)
 
 ### Étape 5.2 : Générer un Rapport HTML
 
@@ -938,6 +940,12 @@ cd frontend
 npm install  # Si pas déjà fait
 npm run dev
 ```
+
+**Ouvrir dans le navigateur :** <http://localhost:5173>
+
+Vous devriez voir l'application TaskFlow fonctionner :
+
+![TaskFlow Application](img/working-app.png)
 
 ---
 
