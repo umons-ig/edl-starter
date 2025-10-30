@@ -1,6 +1,5 @@
 # 🚀 TP 2 : CI/CD avec GitHub Actions
 
-**Durée estimée :** 2h30
 **Prérequis :** TP 1 terminé (backend et frontend avec tests)
 
 ## 🎯 Objectifs de l'Atelier
@@ -37,7 +36,7 @@
 
 ---
 
-## Phase 1 : Comprendre GitHub Actions (20 min)
+## Phase 1 : Comprendre GitHub Actions
 
 ### Étape 1.1 : Anatomie d'un Workflow
 
@@ -100,7 +99,7 @@ jobs:                       # 3️⃣ Les tâches à faire
 
 ---
 
-## Phase 2 : Workflow Backend (40 min)
+## Phase 2 : Workflow Backend
 
 ### Étape 2.1 : Créer le Fichier Workflow
 
@@ -271,7 +270,7 @@ git push origin main
 
 ---
 
-## Phase 3 : Workflow Frontend (40 min)
+## Phase 3 : Workflow Frontend
 
 ### Étape 3.1 : Créer le Workflow Frontend
 
@@ -385,7 +384,7 @@ git push origin main
 
 ---
 
-## Phase 4 : Déboguer un Échec Volontaire (30 min)
+## Phase 4 : Déboguer un Échec Volontaire
 
 ### Étape 4.1 : Pourquoi Apprendre à Déboguer ?
 
@@ -399,7 +398,7 @@ git push origin main
 
 ---
 
-### ✍️ Exercice : Introduire un Bug (10 min)
+### ✍️ Exercice : Introduire un Bug
 
 **Objectif :** Modifier un test pour qu'il échoue volontairement.
 
@@ -429,7 +428,7 @@ git push origin main
 
 ---
 
-### Étape 4.2 : Observer l'Échec (5 min)
+### Étape 4.2 : Observer l'Échec
 
 **Sur GitHub Actions :**
 
@@ -451,7 +450,7 @@ git push origin main
 
 ---
 
-### Étape 4.3 : Analyser les Logs (10 min)
+### Étape 4.3 : Analyser les Logs
 
 **Cliquez sur l'étape "🧪 Run tests".**
 
@@ -488,7 +487,7 @@ FAILED tests/test_api.py::test_health_check - AssertionError: ...
 
 ---
 
-### Étape 4.4 : Reproduire Localement (5 min)
+### Étape 4.4 : Reproduire Localement
 
 **Même commande que dans le workflow :**
 
@@ -524,7 +523,7 @@ uv run pytest tests/test_api.py::test_health_check -v
 
 ---
 
-### Étape 4.5 : Pousser la Correction (5 min)
+### Étape 4.5 : Pousser la Correction
 
 ```bash
 git add backend/tests/test_api.py
@@ -554,9 +553,9 @@ git push origin main
 
 ---
 
-## Phase 5 : Vérification Finale (20 min)
+## Phase 5 : Vérification Finale
 
-### Étape 5.1 : Créer une Pull Request (10 min)
+### Étape 5.1 : Créer une Pull Request
 
 **Pourquoi une PR ?**
 
@@ -614,7 +613,7 @@ Puis :
 
 ---
 
-## 🎁 BONUS : Workflow Java (Optionnel - 30 min)
+## 🎁 BONUS : Workflow Java
 
 **Pour les étudiants qui ont terminé les 5 phases principales.**
 
@@ -854,28 +853,3 @@ Vous devriez voir dans les logs :
 3. Timezone différente
 
 **Déboguer :** Reproduisez exactement les mêmes commandes localement
-
----
-
-## 📚 Ressources
-
-- [Documentation GitHub Actions](https://docs.github.com/en/actions)
-- [Marketplace Actions](https://github.com/marketplace?type=actions)
-- [YAML Syntax](https://yaml.org/)
-- [Actions Workflow Syntax](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions)
-
----
-
-## 🚀 Prochaine Étape : TP 3
-
-Dans l'TP 3, vous allez **déployer votre application** :
-
-- Migrer vers PostgreSQL (base de données réelle)
-- Déployer sur Render (production)
-- Configurer le CD (Continuous Deployment)
-
-**Prêt pour la production ? 🚀**
-
----
-
-**Version 2.0** - TP 2 CI/CD Simplifié
