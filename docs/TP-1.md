@@ -114,7 +114,7 @@ Ouvrez `backend/src/app.py` dans votre éditeur :
 - **Lignes 180-205 :** Endpoint pour créer une tâche
 - **Lignes 144-160 :** Endpoint pour lister les tâches
 
-**Important :** Ce backend utilise un **stockage en mémoire** (un simple dictionnaire Python) pour TP 1 & 2. Vous apprendrez à utiliser PostgreSQL dans l'TP 3.
+**Important :** Ce backend utilise un **stockage en mémoire** (un simple dictionnaire Python) pour les TP 1 & 2. Vous utiliserez PostgreSQL dans le TP 3.
 
 ---
 
@@ -285,8 +285,6 @@ def test_delete_nonexistent_task_returns_404(client):
     # 3. Vérifier le message d'erreur contient "not found"
 ```
 
-**Indice :** C'est un test d'erreur très simple - seulement 3-4 lignes de code !
-
 **Vérifier :**
 
 ```bash
@@ -300,10 +298,6 @@ uv run pytest tests/test_api.py::test_delete_nonexistent_task_returns_404 -v
 **🎯 Objectif :** Tester qu'on ne peut pas mettre à jour une tâche avec une priorité invalide
 
 Ouvrez `backend/tests/test_api.py` et trouvez la fonction `test_update_task_with_invalid_priority`.
-
-**Votre mission :**
-
-Implémentez ce test en suivant les étapes dans les commentaires :
 
 ```python
 def test_update_task_with_invalid_priority(client):
@@ -394,8 +388,6 @@ src/app.py            156      6    96%
 TOTAL                 156      6    96%
 ```
 
-**Note :** La couverture est très élevée (96%) car le backend est simple avec stockage en mémoire. Dans l'TP 3, vous ajouterez une base de données PostgreSQL.
-
 ![Backend Coverage Report](img/backend-coverage.png)
 
 ### Étape 5.2 : Générer un Rapport HTML
@@ -471,7 +463,7 @@ Dans cet atelier, on teste **uniquement le module API** (`api.ts`), pas les comp
 
 - Les tests de composants React nécessitent des outils supplémentaires (React Testing Library)
 - C'est plus complexe (gestion du DOM, événements, état)
-- Pour l'TP 1, on se concentre sur les **concepts de base des tests**
+- Pour le TP 1, on se concentre sur les **concepts de base des tests**
 
 **Ce qu'on teste dans `api.ts` :**
 
