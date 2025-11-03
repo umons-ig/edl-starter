@@ -68,11 +68,11 @@ class Task(TaskCreate):
 
 
 # =============================================================================
-# IN-MEMORY STORAGE (for Atelier 1 & 2)
+# IN-MEMORY STORAGE (for TP 1 & 2)
 # =============================================================================
 
 # Simple dictionary to store tasks
-# In Atelier 3, this will be replaced with PostgreSQL database
+# In TP 3, this will be replaced with PostgreSQL database
 tasks_db: Dict[int, Task] = {}
 next_id = 1
 
@@ -209,7 +209,7 @@ async def update_task(task_id: int, updates: TaskUpdate) -> Task:
     """
     Update an existing task (partial update supported).
 
-    TODO (Atelier 1 - Exercice 2): Implémenter cette fonction
+    TODO (TP 1 - Exercice 2): Implémenter cette fonction
 
     Étapes à suivre:
     1. Vérifier que la tâche existe dans tasks_db
@@ -242,7 +242,7 @@ async def delete_task(task_id: int):
     """
     Delete a task by ID.
 
-    TODO (Atelier 1 - Exercice 1): Implémenter cette fonction
+    TODO (TP 1 - Exercice 1): Implémenter cette fonction
 
     Étapes à suivre:
     1. Vérifier que la tâche existe dans tasks_db
@@ -255,8 +255,11 @@ async def delete_task(task_id: int):
 
     Indice: C'est très simple, seulement 3 lignes de code !
     """
-    # TODO: Votre code ici
-    raise HTTPException(status_code=501, detail="Delete not implemented yet - complete this function!")
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+
+    del tasks_db[task_id]
+    return None
 
 
 if __name__ == "__main__":
