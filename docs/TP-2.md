@@ -2,19 +2,20 @@
 
 **Prérequis :** TP 1 terminé (backend et frontend avec tests)
 
-## 🎯 Objectifs de l'Atelier
+## 🎯 Objectifs du TP
 
 **Objectif principal :** Automatiser les tests avec GitHub Actions
 
-À la fin de cet atelier, vous aurez :
+À la fin de ce TP, vous aurez :
 
 1. ✅ Créé un **workflow backend** qui teste automatiquement votre code Python
 2. ✅ Créé un **workflow frontend** qui teste et build votre code TypeScript
 3. ✅ Compris comment **déboguer** un workflow qui échoue
-4. ✅ Optimisé vos workflows avec le **cache**
+4. ✅ Protégé votre branche **main** pour empêcher les bugs d'arriver en production
 5. ✅ Créé des **workflows réutilisables** et des **pipelines CI**
 6. ✅ Séparé les **tests rapides** (unitaires) des **tests lents** (E2E)
-7. ✅ Ajouté des **badges de status** à votre README
+7. ✅ Créé une **chaîne de jobs** frontend optimisée
+8. ✅ Ajouté des **badges de status** à votre README
 
 ---
 
@@ -97,15 +98,12 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
 4. **Ajoutez les étapes suivantes (dans l'ordre) :**
    - Récupérer le code avec `actions/checkout@v4`
    - Installer Python 3.11 avec `actions/setup-python@v5`
-   - Installer UV :
-
-     ```bash
-     curl -LsSf https://astral.sh/uv/install.sh | sh
-     echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-     ```
-
+     - **Activez le cache pip automatique** : `cache: 'pip'`
+   - Installer UV avec pip : `pip install uv`
    - Installer les dépendances : `cd backend && uv sync`
    - Lancer les tests : `cd backend && uv run pytest -v --cov`
+
+   **💡 Note sur le cache :** En ajoutant `cache: 'pip'`, GitHub Actions met automatiquement en cache les dépendances Python. Vous verrez "Cache restored" lors des exécutions suivantes, ce qui accélère le workflow !
 
 5. **Testez localement avant de pousser :**
 
@@ -258,55 +256,164 @@ Apprendre à lire les logs et corriger les erreurs de workflow.
 
 ---
 
-## ✍️ Exercice 4 : Optimiser avec le Cache
+## ✍️ Exercice 4 : Protection de Branches
 
-### Objectif
+### 🎯 Objectif
 
-Réduire le temps d'exécution de 2-3 minutes à ~30 secondes en utilisant le cache.
+Empêcher les merges sur `main` si les tests échouent. Situation réelle : créer une branche avec un bug, ouvrir une PR, et voir GitHub bloquer le merge !
 
-### Instructions
+### 📖 Partie 1 : Activer la Protection de Branche
 
-1. **Modifiez `.github/workflows/backend.yml`**
+1. **Sur GitHub, allez dans votre repository → Settings → Branches**
 
-2. **Ajoutez une étape de cache APRÈS l'installation de Python :**
+2. **Cliquez sur "Add branch protection rule"**
 
-   ```yaml
-   - name: 💾 Cache UV dependencies
-     uses: actions/cache@v4
-     with:
-       path: ~/.cache/uv
-       key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml', 'backend/uv.lock') }}
-       restore-keys: |
-         ${{ runner.os }}-uv-
-   ```
+3. **Configurez la règle :**
 
-3. **Comprenez la clé du cache :**
-   - `${{ runner.os }}` : OS (Linux)
-   - `${{ hashFiles(...) }}` : Hash des fichiers de dépendances
-   - Le cache change seulement si vous ajoutez/retirez une dépendance
+   - **Branch name pattern :** `main`
 
-4. **Testez en poussant deux fois :**
+   - ✅ **Require status checks to pass before merging**
+     - Cliquez sur "Add required status check"
+     - Cherchez et ajoutez : `test` (le nom du job dans vos workflows)
+
+   - ✅ **Require branches to be up to date before merging**
+
+4. **Cliquez sur "Create" en bas de la page**
+
+### 🧪 Partie 2 : Tester avec une Branche Qui Casse les Tests
+
+**Scénario réaliste :** Vous introduisez un bug accidentellement. GitHub doit vous empêcher de merger !
+
+1. **Créez une nouvelle branche :**
 
    ```bash
-   # Premier push - cache vide
-   git add .github/workflows/backend.yml
-   git commit -m "ci: add UV cache"
-   git push
-
-   # Deuxième push - cache restauré
-   echo "# Test cache" >> README.md
-   git add README.md
-   git commit -m "test: trigger workflow"
-   git push
+   git checkout -b feature/test-branch-protection
    ```
 
-5. **Observez la différence :**
-   - 1ère exécution : "Cache not found" → télécharge tout (~2 min)
-   - 2ème exécution : "Cache restored" → utilise le cache (~30 sec)
+2. **Introduisez un bug dans `backend/tests/test_api.py` :**
 
-### ✅ Résultat
+   ```python
+   def test_health_check(client):
+       response = client.get("/health")
+       assert response.status_code == 200
+       assert response.json()["status"] == "BROKEN"  # ❌ Bug volontaire
+   ```
 
-**Temps gagné : ~2 minutes par build !** ⚡
+3. **Commitez et poussez :**
+
+   ```bash
+   git add backend/tests/test_api.py
+   git commit -m "test: intentionally break health check"
+   git push origin feature/test-branch-protection
+   ```
+
+4. **Créez une Pull Request :**
+   - Allez sur GitHub dans votre repository
+   - Vous verrez un bouton **"Compare & pull request"** → Cliquez dessus
+   - Titre : "Test branch protection"
+   - Description : "Testing if broken tests block merge"
+   - Cliquez sur **"Create pull request"**
+
+5. **Observez ce qui se passe :**
+   - ⏳ Les workflows s'exécutent automatiquement
+   - ❌ Le job `test` échoue (tests backend en erreur)
+   - 🔒 Le bouton **"Merge pull request"** devient **grisé et inutilisable**
+   - ⚠️ GitHub affiche : _"Required status check 'test' has not been successful"_
+
+### ✅ Partie 3 : Corriger et Merger
+
+1. **Corrigez le bug (toujours sur la même branche) :**
+
+   ```python
+   assert response.json()["status"] == "healthy"  # ✅ Correct
+   ```
+
+2. **Commitez et poussez la correction :**
+
+   ```bash
+   git add backend/tests/test_api.py
+   git commit -m "fix: correct health check assertion"
+   git push origin feature/test-branch-protection
+   ```
+
+3. **Observez la PR :**
+   - ✅ Les workflows se relancent **automatiquement**
+   - ✅ Les tests passent maintenant
+   - ✅ Le bouton **"Merge pull request"** devient **vert et cliquable**
+
+4. **Mergez la PR :**
+   - Cliquez sur **"Merge pull request"**
+   - Confirmez avec **"Confirm merge"**
+
+5. **Nettoyez votre environnement local :**
+
+   ```bash
+   git checkout main
+   git pull origin main
+   git branch -d feature/test-branch-protection
+   ```
+
+### 📸 Ce Que Vous Devriez Voir
+
+**Étape 5 - PR bloquée :**
+
+```
+⚠️ Merging is blocked
+❌ Required status check "test" has not been successful
+
+Some checks were not successful
+❌ Backend Tests / test — Failed
+
+This branch has not been approved
+🔒 Merge blocked
+```
+
+**Étape 3 (après fix) - PR débloquée :**
+
+```
+✅ All checks have passed
+✅ Backend Tests / test — Passed
+✅ Frontend Tests / test — Passed
+
+This branch has no conflicts with the base branch
+🎉 Ready to merge
+```
+
+### 💡 Points Clés à Comprendre
+
+**Q1 : Pourquoi est-ce important ?**
+
+- **R :** Empêche les bugs d'arriver en production. Si un développeur casse quelque chose, GitHub le force à corriger **avant** de merger.
+
+**Q2 : Est-ce que ça ralentit le développement ?**
+
+- **R :** Non ! Au contraire, ça évite de perdre du temps à déboguer en production. _"Fail fast, fix fast"_.
+
+**Q3 : Peut-on contourner cette protection ?**
+
+- **R :** Oui, les admins du repo peuvent forcer le merge. Mais **c'est une mauvaise pratique** sauf urgence critique.
+
+### ✅ Critères de Réussite
+
+Vous avez réussi si :
+
+- ✅ Vous avez créé une PR avec des tests qui échouent
+- ✅ GitHub a bloqué le merge (bouton grisé)
+- ✅ Après correction, le merge est devenu possible
+- ✅ La branche a été mergée dans `main`
+
+### 🎁 BONUS : Protection Avancée
+
+Si vous finissez en avance, ajoutez ces règles supplémentaires :
+
+1. **Retournez dans Settings → Branches → Edit rule**
+
+2. **Activez :**
+   - ✅ **Require a pull request before merging**
+     - ✅ **Require approvals :** 1
+   - ✅ **Do not allow bypassing the above settings**
+
+3. **Testez en créant une autre PR :** Vous ne pourrez plus merger même si les tests passent, il faudra une **approbation** d'un autre développeur !
 
 ---
 
@@ -574,14 +681,29 @@ Sur GitHub, vous verrez des badges qui se mettent à jour automatiquement :
 
 Félicitations ! Vous avez maintenant :
 
-✅ **Exercice 1** : Workflow backend automatisé
-✅ **Exercice 2** : Workflow frontend automatisé
+✅ **Exercice 1** : Workflow backend automatisé (avec cache pip automatique)
+✅ **Exercice 2** : Workflow frontend automatisé (avec cache npm automatique)
 ✅ **Exercice 3** : Compétences en débogage de workflows
-✅ **Exercice 4** : Cache UV pour optimiser les builds
+✅ **Exercice 4** : Protection de branches pour empêcher les bugs d'arriver en production
 ✅ **Exercice 5** : Pipeline CI global avec workflows réutilisables
 ✅ **Exercice 6** : Séparation tests unitaires / E2E
 ✅ **Exercice 7** : Chaîne de jobs frontend optimisée
 ✅ **Exercice 8** : Badges de status dans le README
+
+### 🎯 Compétences Acquises
+
+Vous savez maintenant :
+
+- ✅ Créer et configurer des workflows GitHub Actions
+- ✅ Utiliser le cache automatique pour accélérer les builds
+- ✅ Déboguer des workflows qui échouent
+- ✅ Protéger la branche `main` contre les bugs
+- ✅ Créer des Pull Requests et comprendre le processus de review
+- ✅ Organiser des pipelines CI complexes
+- ✅ Séparer tests rapides et tests lents
+- ✅ Afficher le statut de vos workflows avec des badges
+
+**Ces compétences sont directement utilisables en entreprise !** 🚀
 
 **Temps total estimé :** 4-5 heures
 
@@ -591,8 +713,8 @@ Félicitations ! Vous avez maintenant :
 
 ### ❌ `uv: command not found`
 
-**Cause :** UV n'est pas dans le PATH
-**Solution :** Ajoutez `echo "$HOME/.cargo/bin" >> $GITHUB_PATH`
+**Cause :** UV n'est pas installé ou pas dans le PATH
+**Solution :** Vérifiez que vous avez bien `pip install uv` dans votre workflow
 
 ### ❌ Tests qui passent localement mais échouent sur GitHub
 
@@ -601,17 +723,59 @@ Félicitations ! Vous avez maintenant :
 1. Variable d'environnement manquante
 2. Dépendance système manquante
 3. Timezone différente
+4. Version de Python/Node différente
 
-**Déboguer :** Reproduisez exactement les mêmes commandes localement
+**Déboguer :** Reproduisez exactement les mêmes commandes localement avec la même version
 
-### ❌ Cache qui ne fonctionne pas
+### ❌ "Required status check has not been successful"
 
-**Cause :** Mauvaise clé de cache
-**Solution :** Vérifiez que `hashFiles()` pointe vers les bons fichiers
+**Cause :** Vous avez activé la protection de branche mais les tests échouent
+**Solution :** C'est normal ! Corrigez vos tests sur la branche, poussez à nouveau, et le merge se débloquera
+
+### ❌ Cache qui ne se restaure pas
+
+**Cause :** Le cache pip/npm automatique ne fonctionne que si les fichiers de dépendances (`requirements.txt`, `package-lock.json`, etc.) n'ont pas changé
+**Solution :** C'est normal si vous avez modifié vos dépendances. Le cache se reconstruira automatiquement
 
 ---
 
-## 🎁 BONUS : Workflow Java (Optionnel)
+## 🎁 BONUS 1 : Cache UV Manuel (Pour les Curieux)
+
+**Vous voulez comprendre comment fonctionne le cache en profondeur ?**
+
+Le cache automatique (`cache: 'pip'`) est pratique, mais vous pouvez aussi créer des caches personnalisés avec `actions/cache@v4`.
+
+### Exemple : Cache UV Manuel
+
+```yaml
+- name: 💾 Cache UV dependencies
+  uses: actions/cache@v4
+  with:
+    path: ~/.cache/uv
+    key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml', 'backend/uv.lock') }}
+    restore-keys: |
+      ${{ runner.os }}-uv-
+```
+
+### Comment ça marche ?
+
+1. **`path`** : Où sont stockées les dépendances
+2. **`key`** : Clé unique basée sur le contenu des fichiers
+   - `${{ runner.os }}` : Linux/macOS/Windows
+   - `${{ hashFiles(...) }}` : Hash MD5 des fichiers de dépendances
+3. **`restore-keys`** : Clés de fallback si la clé exacte n'existe pas
+
+### Quand utiliser un cache manuel ?
+
+- ✅ Pour des outils qui n'ont pas de cache automatique
+- ✅ Pour cacher des artifacts de build (compilés binaires, etc.)
+- ✅ Pour optimiser des étapes personnalisées
+
+**Note :** Pour Python et Node.js, le cache automatique suffit dans 99% des cas !
+
+---
+
+## 🎁 BONUS 2 : Workflow Java (Optionnel)
 
 **Pour les étudiants qui ont fait les exercices Java du TP 1.**
 
