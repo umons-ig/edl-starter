@@ -14,8 +14,7 @@
 4. ✅ Protégé votre branche **main** pour empêcher les bugs d'arriver en production
 5. ✅ Créé des **workflows réutilisables** et des **pipelines CI**
 6. ✅ Séparé les **tests rapides** (unitaires) des **tests lents** (E2E)
-7. ✅ Créé une **chaîne de jobs** frontend optimisée
-8. ✅ Ajouté des **badges de status** à votre README
+7. ✅ Ajouté des **badges de status** à votre README
 
 ---
 
@@ -37,6 +36,49 @@
 - Service gratuit de GitHub
 - Exécute vos tests sur des serveurs GitHub
 - Vérifie chaque commit et pull request
+
+---
+
+## ⚙️ Prérequis : Vérifier votre connexion GitHub
+
+**Avant de commencer, assurez-vous que vous pouvez pousser du code sur votre repository GitHub.**
+
+### 1. Allez dans votre repository cloné
+
+```bash
+cd chemin/vers/votre/repository
+```
+
+### 2. Testez votre connexion
+
+```bash
+git push origin main
+```
+
+**Résultats possibles :**
+
+- ✅ **Everything up-to-date** → Parfait, vous êtes prêt !
+- ❌ **Error: authentication failed** → Suivez les instructions ci-dessous
+
+### 3. Configuration HTTPS (si vous avez une erreur)
+
+#### Créer un Personal Access Token (PAT)
+
+1. Sur GitHub, allez dans : **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
+2. Cliquez sur **"Generate new token (classic)"**
+3. Configurez :
+   - Note : `TP EDL`
+   - Expiration : `90 days`
+   - Cochez : ✅ **`repo`** (accès complet aux repositories)
+4. Cliquez sur **"Generate token"**
+5. **⚠️ Copiez le token immédiatement** (vous ne pourrez plus le revoir !)
+
+#### Utiliser le token
+
+Lors du prochain `git push`, Git vous demandera :
+
+- **Username :** Votre nom d'utilisateur GitHub
+- **Password :** **Collez votre token** (PAS votre mot de passe GitHub !)
 
 ---
 
@@ -88,24 +130,54 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
    mkdir -p .github/workflows
    ```
 
-2. **Créez le fichier `.github/workflows/backend.yml`**
+2. **Créez le fichier `.github/workflows/backend.yml` avec ce squelette :**
 
-3. **Configurez le workflow avec :**
-   - Nom : "Backend Tests"
-   - Déclencheurs : push et pull_request sur `main`
-   - Job nommé "test" qui s'exécute sur `ubuntu-latest`
+   ```yaml
+   name: Backend Tests
 
-4. **Ajoutez les étapes suivantes (dans l'ordre) :**
-   - Récupérer le code avec `actions/checkout@v4`
-   - Installer Python 3.11 avec `actions/setup-python@v5`
-     - **Activez le cache pip automatique** : `cache: 'pip'`
-   - Installer UV avec pip : `pip install uv`
-   - Installer les dépendances : `cd backend && uv sync`
-   - Lancer les tests : `cd backend && uv run pytest -v --cov`
+   on:
+     push:
+       branches: [main]
 
-   **💡 Note sur le cache :** En ajoutant `cache: 'pip'`, GitHub Actions met automatiquement en cache les dépendances Python. Vous verrez "Cache restored" lors des exécutions suivantes, ce qui accélère le workflow !
+   jobs:
+     test:
+       runs-on: ubuntu-latest
 
-5. **Testez localement avant de pousser :**
+       steps:
+         - name: Checkout code
+           uses: actions/checkout@v4
+
+         # TODO : Setup Python 3.11 avec cache pip
+
+         # TODO : Installez UV avec pip
+
+         # TODO : Installez les dépendances (cd backend && uv sync)
+
+         # TODO : Lancez les tests
+   ```
+
+3. **Complétez les TODO en vous aidant de la documentation**
+
+   **📖 Documentation utile :**
+   - [actions/setup-python](https://github.com/actions/setup-python#caching-packages-dependencies) : Pour Setup Python avec cache
+
+   **💡 Indices :**
+   - **Setup Python** : Utilisez `actions/setup-python@v5` avec les paramètres :
+     - `python-version: '3.11'`
+     - `cache: 'pip'` (pour activer le cache automatique)
+   - **Commandes shell** : Utilisez `run:` suivi de la commande
+   - **Multi-lignes** : Utilisez `run: |` pour exécuter plusieurs commandes
+
+   **Exemple de step avec run :**
+
+   ```yaml
+   - name: Mon étape
+     run: |
+       cd mon-dossier
+       ma-commande
+   ```
+
+4. **Testez localement avant de pousser :**
 
    ```bash
    cd backend
@@ -144,22 +216,46 @@ Créer un workflow qui teste et build le frontend automatiquement.
 
 ### Instructions
 
-1. **Créez le fichier `.github/workflows/frontend.yml`**
+1. **Créez le fichier `.github/workflows/frontend.yml` avec ce squelette :**
 
-2. **Configurez le workflow similairement au backend :**
-   - Nom : "Frontend Tests"
-   - Mêmes déclencheurs que le backend
+   ```yaml
+   name: Frontend Tests
 
-3. **Ajoutez les étapes suivantes :**
-   - Récupérer le code
-   - Installer Node.js 18 avec `actions/setup-node@v4`
-     - Activez le cache npm : `cache: 'npm'`
-     - Spécifiez le chemin : `cache-dependency-path: frontend/package-lock.json`
-   - Installer les dépendances : `cd frontend && npm ci`
-   - Lancer les tests : `cd frontend && npm test -- --run`
-   - Vérifier le build : `cd frontend && npm run build`
+   on:
+     push:
+       branches: [main]
 
-4. **Testez localement :**
+   jobs:
+     test:
+       runs-on: ubuntu-latest
+
+       steps:
+         - name: Checkout code
+           uses: actions/checkout@v4
+
+         # TODO : Setup Node.js 18 avec cache npm
+         # Indice : cache-dependency-path: frontend/package-lock.json
+
+         # TODO : Installez les dépendances (cd frontend && npm ci)
+
+         # TODO : Lancez les tests
+
+         # TODO : Vérifiez le build
+   ```
+
+2. **Complétez les TODO en vous aidant de la documentation**
+
+   **📖 Documentation utile :**
+   - [actions/setup-node](https://github.com/actions/setup-node#caching-global-packages-data) : Pour Setup Node.js avec cache
+
+   **💡 Indices :**
+   - **Setup Node** : Utilisez `actions/setup-node@v4` avec les paramètres :
+     - `node-version: '18'`
+     - `cache: 'npm'`
+     - `cache-dependency-path: frontend/package-lock.json`
+   - **npm ci** : Installe exactement les versions de `package-lock.json`
+
+3. **Testez localement :**
 
    ```bash
    cd frontend
@@ -167,7 +263,7 @@ Créer un workflow qui teste et build le frontend automatiquement.
    npm run build
    ```
 
-5. **Poussez et vérifiez :**
+4. **Poussez et vérifiez :**
 
    ```bash
    git add .github/workflows/frontend.yml
@@ -258,27 +354,59 @@ Apprendre à lire les logs et corriger les erreurs de workflow.
 
 ## ✍️ Exercice 4 : Protection de Branches
 
+### 📖 C'est quoi une Pull Request (PR) ?
+
+**Concept simple :** Au lieu de pousser directement sur `main`, vous créez une **branche**, faites vos modifications, puis demandez à merger via une **Pull Request**.
+
+**Workflow visuel :**
+
+```text
+main ──────────────────────────●  (production, protégée)
+                               ↑
+                          [Pull Request]
+                               │
+                         ✅ Tests passent ?
+                               │
+feature/ma-branche ───●────●───┘  (votre travail)
+```
+
+**Avantages :**
+
+- ✅ Les tests s'exécutent **avant** le merge
+- ✅ Quelqu'un peut **review** votre code
+- ✅ La branche `main` reste **stable**
+
+**Dans cet exercice, vous allez vivre cette situation !**
+
+---
+
 ### 🎯 Objectif
 
-Empêcher les merges sur `main` si les tests échouent. Situation réelle : créer une branche avec un bug, ouvrir une PR, et voir GitHub bloquer le merge !
+Empêcher les merges sur `main` si les tests échouent. Vous allez créer une branche avec un bug, ouvrir une PR, et voir GitHub bloquer le merge !
 
 ### 📖 Partie 1 : Activer la Protection de Branche
+
+⚠️ **Prérequis :** Vous devez avoir déjà poussé vos workflows des exercices 1 et 2, et ils doivent avoir tourné au moins une fois.
 
 1. **Sur GitHub, allez dans votre repository → Settings → Branches**
 
 2. **Cliquez sur "Add branch protection rule"**
 
-3. **Configurez la règle :**
+3. **Configurez ces paramètres :**
 
-   - **Branch name pattern :** `main`
+   **a) Branch name pattern**
+   - Entrez : `main`
 
-   - ✅ **Require status checks to pass before merging**
-     - Cliquez sur "Add required status check"
-     - Cherchez et ajoutez : `test` (le nom du job dans vos workflows)
+   **b) Require status checks to pass before merging**
+   - ✅ Cochez la case **"Require status checks to pass before merging"**
+   - Dans la barre de recherche qui apparaît, tapez : `test`
+   - Cliquez sur `test` dans les résultats (c'est le nom du job de vos workflows)
 
-   - ✅ **Require branches to be up to date before merging**
+   💡 **Si `test` n'apparaît pas :** Vos workflows n'ont pas encore tourné. Retournez sur l'onglet "Actions" et vérifiez qu'ils ont bien été exécutés.
 
-4. **Cliquez sur "Create" en bas de la page**
+4. **Scrollez tout en bas et cliquez sur "Create"**
+
+⚠️ **Important :** Ne cochez RIEN d'autre ! Les autres options sont pour des cas avancés.
 
 ### 🧪 Partie 2 : Tester avec une Branche Qui Casse les Tests
 
@@ -308,11 +436,15 @@ Empêcher les merges sur `main` si les tests échouent. Situation réelle : cré
    ```
 
 4. **Créez une Pull Request :**
-   - Allez sur GitHub dans votre repository
-   - Vous verrez un bouton **"Compare & pull request"** → Cliquez dessus
-   - Titre : "Test branch protection"
-   - Description : "Testing if broken tests block merge"
-   - Cliquez sur **"Create pull request"**
+
+   ```bash
+   # Si c'est la première fois, configurez le repo par défaut
+   gh repo set-default
+   # Sélectionnez VOTRE fork (pas le repo d'origine)
+
+   # Créez la PR
+   gh pr create --title "Test branch protection" --body "Testing if broken tests block merge"
+   ```
 
 5. **Observez ce qui se passe :**
    - ⏳ Les workflows s'exécutent automatiquement
@@ -393,28 +525,6 @@ This branch has no conflicts with the base branch
 
 - **R :** Oui, les admins du repo peuvent forcer le merge. Mais **c'est une mauvaise pratique** sauf urgence critique.
 
-### ✅ Critères de Réussite
-
-Vous avez réussi si :
-
-- ✅ Vous avez créé une PR avec des tests qui échouent
-- ✅ GitHub a bloqué le merge (bouton grisé)
-- ✅ Après correction, le merge est devenu possible
-- ✅ La branche a été mergée dans `main`
-
-### 🎁 BONUS : Protection Avancée
-
-Si vous finissez en avance, ajoutez ces règles supplémentaires :
-
-1. **Retournez dans Settings → Branches → Edit rule**
-
-2. **Activez :**
-   - ✅ **Require a pull request before merging**
-     - ✅ **Require approvals :** 1
-   - ✅ **Do not allow bypassing the above settings**
-
-3. **Testez en créant une autre PR :** Vous ne pourrez plus merger même si les tests passent, il faudra une **approbation** d'un autre développeur !
-
 ---
 
 ## ✍️ Exercice 5 : Workflows Réutilisables
@@ -427,13 +537,13 @@ Créer un pipeline CI global qui orchestre backend et frontend.
 
 1. **Rendez vos workflows réutilisables :**
 
-   Dans `backend.yml` et `frontend.yml`, ajoutez `workflow_call` aux déclencheurs :
+   Dans `backend.yml` et `frontend.yml`, ajoutez `pull_request` et `workflow_call` aux déclencheurs :
 
    ```yaml
    on:
      push:
        branches: [main]
-     pull_request:
+     pull_request:  # ✨ Nouveau !
        branches: [main]
      workflow_call:  # ✨ Nouveau !
    ```
@@ -517,33 +627,33 @@ Exécuter les tests rapides (unitaires) sur toutes les branches, mais les tests 
 
    @pytest.mark.e2e
    def test_complete_task_lifecycle(client):
-       """Test E2E : CRUD complet d'une tâche."""
-       # Créer
+       """Test E2E : Créer plusieurs tâches et les lister."""
+       # Créer la première tâche
        response = client.post("/tasks", json={
-           "title": "Test E2E",
-           "description": "Test complet"
+           "title": "Tâche E2E 1",
+           "description": "Première tâche"
        })
        assert response.status_code == 201
-       task_id = response.json()["id"]
+       task1_id = response.json()["id"]
 
-       # Lire
-       response = client.get(f"/tasks/{task_id}")
-       assert response.status_code == 200
-
-       # Mettre à jour
-       response = client.put(f"/tasks/{task_id}", json={
-           "title": "Updated",
-           "description": "Modified"
+       # Créer la deuxième tâche
+       response = client.post("/tasks", json={
+           "title": "Tâche E2E 2",
+           "description": "Deuxième tâche"
        })
+       assert response.status_code == 201
+       task2_id = response.json()["id"]
+
+       # Lister toutes les tâches
+       response = client.get("/tasks")
        assert response.status_code == 200
+       tasks = response.json()
+       assert len(tasks) >= 2
 
-       # Supprimer
-       response = client.delete(f"/tasks/{task_id}")
-       assert response.status_code == 204
-
-       # Vérifier suppression
-       response = client.get(f"/tasks/{task_id}")
-       assert response.status_code == 404
+       # Vérifier que nos deux tâches sont dans la liste
+       task_ids = [task["id"] for task in tasks]
+       assert task1_id in task_ids
+       assert task2_id in task_ids
    ```
 
 3. **Testez localement les différentes commandes :**
@@ -560,84 +670,127 @@ Exécuter les tests rapides (unitaires) sur toutes les branches, mais les tests 
    uv run pytest -v
    ```
 
-**Partie 2 : Créer le workflow séparé**
+**Partie 2 : Modifier le workflow backend pour séparer les tests**
 
-4. **Créez `.github/workflows/backend-split.yml` avec 2 jobs :**
+4. **Modifiez `.github/workflows/backend.yml` pour ajouter 2 jobs au lieu d'un seul :**
 
-   - **Job 1 : unit-tests** (toujours)
-     - Exécute : `pytest -v -m "not e2e"`
+   Remplacez le contenu complet par :
 
-   - **Job 2 : e2e-tests** (seulement sur main)
-     - Ajoute la condition : `if: github.ref == 'refs/heads/main'`
-     - Exécute : `pytest -v -m "e2e"`
+   ```yaml
+   name: Backend Tests
 
-5. **Testez avec une Pull Request :**
+   on:
+     push:
+       branches: [main]
+     pull_request:
+       branches: [main]
+     workflow_call:
 
-   ```bash
-   git checkout -b test/split-tests
-   echo "# Test" >> README.md
-   git add .
-   git commit -m "test: verify E2E don't run on PR"
-   git push origin test/split-tests
+   jobs:
+     unit-tests:
+       name: Unit Tests
+       runs-on: ubuntu-latest
+
+       steps:
+         - name: 📥 Checkout code
+           uses: actions/checkout@v4
+
+         - name: 🐍 Setup Python 3.11
+           uses: actions/setup-python@v5
+           with:
+             python-version: '3.11'
+             cache: 'pip'
+
+         - name: 📦 Install UV
+           run: pip install uv
+
+         - name: 📚 Install dependencies
+           run: |
+             cd backend
+             uv sync
+
+         - name: 🧪 Run unit tests only
+           run: |
+             cd backend
+             uv run pytest -v -m "not e2e"
+
+     e2e-tests:
+       name: E2E Tests
+       runs-on: ubuntu-latest
+       if: github.ref == 'refs/heads/main'  # ✨ Seulement sur main !
+       needs: unit-tests
+
+       steps:
+         - name: 📥 Checkout code
+           uses: actions/checkout@v4
+
+         - name: 🐍 Setup Python 3.11
+           uses: actions/setup-python@v5
+           with:
+             python-version: '3.11'
+             cache: 'pip'
+
+         - name: 📦 Install UV
+           run: pip install uv
+
+         - name: 📚 Install dependencies
+           run: |
+             cd backend
+             uv sync
+
+         - name: 🧪 Run E2E tests only
+           run: |
+             cd backend
+             uv run pytest -v -m "e2e"
    ```
 
-### ✅ Résultat attendu
+   **Changements clés :**
+   - **2 jobs** au lieu d'un seul : `unit-tests` et `e2e-tests`
+   - `if: github.ref == 'refs/heads/main'` → Le job E2E ne tourne que sur main
+   - `needs: unit-tests` → Les E2E attendent que les tests unitaires passent
 
-- **Sur PR** : Seulement "Unit Tests" s'exécute
-- **Sur main** : "Unit Tests" **ET** "E2E Tests" s'exécutent
+5. **Testez le comportement différent entre PR et main :**
 
----
+   **Étape 1 : Tester sur main d'abord**
 
-## ✍️ Exercice 7 : Chaîne de Jobs Frontend
-
-### Objectif
-
-Créer une chaîne Lint → Test → Build pour optimiser le feedback.
-
-### Instructions
-
-1. **Créez `.github/workflows/frontend-chain.yml` avec 3 jobs :**
-
-   **Job 1 : lint**
-   - Installe les dépendances
-   - Exécute : `npm run lint`
-
-   **Job 2 : test**
-   - Dépend de `lint` avec `needs: lint`
-   - Installe les dépendances
-   - Exécute : `npm test -- --run`
-
-   **Job 3 : build**
-   - Dépend de `test` avec `needs: test`
-   - Installe les dépendances
-   - Exécute : `npm run build`
-   - Upload les artifacts avec `actions/upload-artifact@v4` :
-
-     ```yaml
-     - name: 📤 Upload build artifacts
-       uses: actions/upload-artifact@v4
-       with:
-         name: frontend-build
-         path: frontend/dist/
-     ```
-
-2. **Poussez et observez :**
+   Poussez vos changements sur main :
 
    ```bash
-   git add .github/workflows/frontend-chain.yml
-   git commit -m "ci: add frontend chain"
+   git add .
+   git commit -m "feat: split unit and E2E tests"
    git push origin main
    ```
 
-### ✅ Avantages
+   → Sur GitHub, allez dans **Actions** → Cliquez sur le workflow **"Backend Tests"** → Vous devriez voir **les deux jobs : "Unit Tests" ET "E2E Tests"** s'exécuter.
 
-- Si lint échoue → tests et build ne s'exécutent pas
-- Feedback plus rapide (lint = 10s vs build = 2min)
-- Build artifacts disponibles pour téléchargement
+   **Étape 2 : Tester sur une PR**
+
+   Créez une branche et une PR pour voir que les E2E ne tournent pas :
+
+   ```bash
+   # Assurez-vous d'être sur main et à jour
+   git checkout main
+   git pull origin main
+
+   # Créez une nouvelle branche
+   git checkout -b test/pr-no-e2e
+   echo "# Test PR" >> README.md
+   git add .
+   git commit -m "test: verify E2E don't run on PR"
+   git push origin test/pr-no-e2e
+   gh pr create --title "Test E2E sur PR" --body "Vérifier que E2E ne tourne pas sur PR"
+   ```
+
+   → Sur GitHub, allez dans **Actions** → Cliquez sur le workflow **"Backend Tests"** de la PR → Vous devriez voir **seulement le job "Unit Tests"** s'exécuter (pas de E2E Tests).
+
+### ✅ Résultat attendu
+
+- **Sur PR** : Seulement le job **"Unit Tests"** s'exécute ⚡ (rapide)
+- **Sur main** : Les jobs **"Unit Tests" ET "E2E Tests"** s'exécutent 🐢 (plus lent mais complet)
 
 ---
 
-## ✍️ Exercice 8 : Badges de Status
+## ✍️ Exercice 7 : Badges de Status
 
 ### Objectif
 
@@ -687,8 +840,7 @@ Félicitations ! Vous avez maintenant :
 ✅ **Exercice 4** : Protection de branches pour empêcher les bugs d'arriver en production
 ✅ **Exercice 5** : Pipeline CI global avec workflows réutilisables
 ✅ **Exercice 6** : Séparation tests unitaires / E2E
-✅ **Exercice 7** : Chaîne de jobs frontend optimisée
-✅ **Exercice 8** : Badges de status dans le README
+✅ **Exercice 7** : Badges de status dans le README
 
 ### 🎯 Compétences Acquises
 
@@ -739,43 +891,7 @@ Vous savez maintenant :
 
 ---
 
-## 🎁 BONUS 1 : Cache UV Manuel (Pour les Curieux)
-
-**Vous voulez comprendre comment fonctionne le cache en profondeur ?**
-
-Le cache automatique (`cache: 'pip'`) est pratique, mais vous pouvez aussi créer des caches personnalisés avec `actions/cache@v4`.
-
-### Exemple : Cache UV Manuel
-
-```yaml
-- name: 💾 Cache UV dependencies
-  uses: actions/cache@v4
-  with:
-    path: ~/.cache/uv
-    key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml', 'backend/uv.lock') }}
-    restore-keys: |
-      ${{ runner.os }}-uv-
-```
-
-### Comment ça marche ?
-
-1. **`path`** : Où sont stockées les dépendances
-2. **`key`** : Clé unique basée sur le contenu des fichiers
-   - `${{ runner.os }}` : Linux/macOS/Windows
-   - `${{ hashFiles(...) }}` : Hash MD5 des fichiers de dépendances
-3. **`restore-keys`** : Clés de fallback si la clé exacte n'existe pas
-
-### Quand utiliser un cache manuel ?
-
-- ✅ Pour des outils qui n'ont pas de cache automatique
-- ✅ Pour cacher des artifacts de build (compilés binaires, etc.)
-- ✅ Pour optimiser des étapes personnalisées
-
-**Note :** Pour Python et Node.js, le cache automatique suffit dans 99% des cas !
-
----
-
-## 🎁 BONUS 2 : Workflow Java (Optionnel)
+## 🎁 BONUS : Workflow Java (Optionnel)
 
 **Pour les étudiants qui ont fait les exercices Java du TP 1.**
 
