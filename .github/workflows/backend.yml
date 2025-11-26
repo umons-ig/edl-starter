@@ -1,0 +1,33 @@
+name: Backend Tests
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      # TODO : Setup Python 3.11 avec cache pip
+   #steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip' # caching pip dependencies
+
+      # TODO : Installez UV avec pip
+      - name: Install uv
+        run: pip install uv
+
+      # TODO : Installez les dépendances (cd backend && uv sync)
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          uv sync
+
+      # TODO : Lancez les tests
+      - name: Run tests
+        run: |
+          cd backend
+          uv run pytest -v --cov
