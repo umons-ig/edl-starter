@@ -445,6 +445,9 @@ Empêcher les merges sur `main` si les tests échouent. Vous allez créer une br
    # Créez la PR
    gh pr create --title "Test branch protection" --body "Testing if broken tests block merge"
    ```
+   💡 **Attention :** les commandes `gh ...` nécessitent l’installation de **GitHub CLI**.  
+   Si vous ne l’avez pas encore, installez-le avant d’exécuter ces commandes.
+
 
 5. **Observez ce qui se passe :**
    - ⏳ Les workflows s'exécutent automatiquement
@@ -604,6 +607,7 @@ Le job `summary` attend que backend **ET** frontend soient terminés avant de s'
 ### Objectif
 
 Exécuter les tests rapides (unitaires) sur toutes les branches, mais les tests lents (E2E) seulement sur `main`.
+Les tests **E2E (end-to-end)** vérifient le fonctionnement complet de l’application comme le ferait un utilisateur réel (du frontend au backend, base de données, API, etc.). Ils sont plus lents que les tests unitaires, c’est pourquoi on ne les exécute que sur la branche `main`.
 
 ### Instructions
 
@@ -799,7 +803,6 @@ Afficher le statut des workflows dans votre README.
 ### Instructions
 
 1. **Modifiez `README.md` et ajoutez au début :**
-
    ```markdown
    # TaskFlow API
 
