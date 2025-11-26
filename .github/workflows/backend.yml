@@ -1,0 +1,35 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    # Définit le dossier par défaut pour toutes les commandes 'run'
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip' # Active le cache pour l'installation de base
+
+      - name: Install UV
+        run: pip install uv
+
+      - name: Install dependencies
+        # uv sync crée l'environnement virtuel et installe les dépendances
+        run: uv sync
+
+      - name: Run tests
+        # 'uv run' exécute la commande dans l'environnement virtuel créé par uv
+        run: uv run pytest
