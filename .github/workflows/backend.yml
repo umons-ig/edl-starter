@@ -20,10 +20,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r backend/requirements.txt
-        pip install pytest pytest-asyncio pytest-cov responses faker
+        pip install uv
+        cd backend
+        uv sync
 
     - name: Run backend tests
       working-directory: backend
       run: |
-        pytest -q
+        uv run pytest -v --cov
