@@ -18,7 +18,8 @@ jobs:
           cache: 'pip'
 
       
-      - name: Install Frontend Dependencies (if requirements.txt is used here)
+      - name: Install Frontend Dependencies 
+        working-directory: ./backend
         run: pip install -r requirements.txt
 
       - name: Install UV
