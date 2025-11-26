@@ -1,28 +1,29 @@
 name : Backend Tests
 
 on:
-  push: 
-    branches : [main]
-
+  push:
+    branches: [main]
 
 jobs:
-  test: 
+  test:
     runs-on: ubuntu-latest
-  
-  steps: 
-    - name : Checkout code
-      uses : actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name : Setup Python3.11
-      uses : actions/setup-python@v5
-      with : 
-        python-version : '3.11'
-        cache : 'pip'
-      run : pip install -r requirements.txt
+      - name: Setup Python 3.11 and Cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
       
-    - name : Install UV
-      run  : pip install uv
-    
-    - name  : Install dependices 
-      working-directory : ./backend
-      run  : uv sync 
+      - name: Install Frontend Dependencies (if requirements.txt is used here)
+        run: pip install -r requirements.txt
+
+      - name: Install UV
+        run: pip install uv
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: uv sync
