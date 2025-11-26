@@ -166,24 +166,7 @@ def test_delete_nonexistent_task_returns_404(client):
 # EXERCICE 2 : Écrire un test pour METTRE À JOUR une tâche
 # Pattern : Créer → Mettre à jour → Vérifier les changements
 
-"""
-def test_update_task(client):
-    # TODO : Écrivez votre test ici !
-    # 1)
-    new_task = {
-        "title": "Titre original"}
-    create_response = client.post("/tasks", json=new_task)
-    # 2)
-    task_id = create_response.json()["id"]
-    # 3)
-    response=client.put(f"/tasks/{task_id}", json={"title": "Nouveau Titre"})
-    # 4)
-    assert response.status_code == 200
-    # 5)
-    titre = response.json()["title"]
-    assert titre == "Nouveau Titre"
 
-"""
 
 
 # EXERCICE 3 : Tester la validation - un titre vide devrait échouer
