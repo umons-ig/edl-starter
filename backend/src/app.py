@@ -234,7 +234,36 @@ async def update_task(task_id: int, updates: TaskUpdate) -> Task:
     Indice: Regardez comment create_task fonctionne pour vous inspirer
     """
     # TODO: Votre code ici
-    raise HTTPException(status_code=501, detail="Update not implemented yet - complete this function!")
+    # 1)
+    if task_id not in tasks_db:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    # 2)
+    existing_task=tasks_db[task_id]
+    # 3)
+    champs=updates.model_dump(exclude_unset=True)
+    # 4)
+    if "title" in champs and not champs["title"]:
+        raise HTTPException(status_code=422, detail="Title cannot be empty")
+    # 5)
+    update_data=updates.model_dump(exclude_unset=True)
+    task_update=Task(
+        id=task_id,
+        title=update_data.get("title", existing_task.title),
+        description=update_data.get("description", existing_task.description),
+        status=update_data.get("status", existing_task. status),
+        priority=update_data.get("priority", existing_task.priority),
+        assignee=update_data.get("assignee", existing_task.assignee),
+        due_date=update_data.get("due_date", existing_task.due_date),
+        created_at=existing_task.created_at,
+        updated_at=datetime.utcnow()
+    )
+    # 6)
+    tasks_db[task_id]=task_update
+    # 7)
+    return tasks_db[task_id]
+
+
+    # raise HTTPException(status_code=501, detail="Update not implemented yet - complete this function!")
 
 
 @app.delete("/tasks/{task_id}", status_code=204)
@@ -264,3 +293,4 @@ async def delete_task(task_id: int):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
