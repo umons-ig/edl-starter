@@ -3,6 +3,9 @@ name: Backend Tests
 on:
   push:
     branches: [main]
+  pull_request:     # Nouveau : se lance sur les PR
+    branches: [main]
+  workflow_call:    # Nouveau : permet d'être appelé par un autre workflow
 
 jobs:
   test:

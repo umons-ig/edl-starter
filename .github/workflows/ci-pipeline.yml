@@ -1,0 +1,27 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Appelle le workflow backend existant
+  backend:
+    name: Backend Tests
+    uses: ./.github/workflows/backend.yml
+
+  # Appelle le workflow frontend existant
+  frontend:
+    name: Frontend Tests
+    uses: ./.github/workflows/frontend.yml
+
+  # Ce job ne s'exécute que si les deux autres ont réussi
+  summary:
+    name: All Tests Passed
+    needs: [backend, frontend] # Attend la fin des deux autres
+    runs-on: ubuntu-latest
+    steps:
+      - name: Success
+        run: echo "Tous les tests (Backend + Frontend) sont passés avec succès !"
