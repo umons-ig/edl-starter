@@ -202,21 +202,12 @@ from .database import get_db, init_db
 from .models import TaskModel, TaskStatus, TaskPriority
 ```
 
-> ⚠️ **Gardez ces imports existants** (ne les supprimez pas) :
->
-> ```python
-> from fastapi.middleware.cors import CORSMiddleware
-> import os
-> ```
-
 💡 **Pourquoi ces imports ?**
 
 - `Depends` : Injection de dépendances FastAPI pour la session DB
 - `Session` : Type de la session SQLAlchemy
 - `text` : Pour exécuter du SQL brut (health check)
 - `uuid` : Pour générer des identifiants uniques
-- `CORSMiddleware` : Permet les requêtes cross-origin (frontend → backend)
-- `os` : Pour lire les variables d'environnement (`CORS_ORIGINS`)
 
 **Étape 2 : Nettoyer le code obsolète**
 
@@ -284,9 +275,21 @@ app = FastAPI(
     ...
     lifespan=lifespan,  # ← Ajouter cette ligne
 )
+```
 
-# ⚠️ IMPORTANT : Garder le middleware CORS après app = FastAPI(...)
-# Ce code existe déjà dans app.py - ne pas le supprimer !
+**Étape 3b : Ajouter le middleware CORS**
+
+Ajoutez ces imports en haut du fichier (avec les autres imports) :
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+import os
+```
+
+Puis ajoutez ce code **juste après** `app = FastAPI(...)` :
+
+```python
+# Configuration CORS pour le frontend
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
 cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
 
@@ -299,7 +302,7 @@ app.add_middleware(
 )
 ```
 
-> ⚠️ **Ne supprimez pas le middleware CORS !** Il est essentiel pour que le frontend puisse communiquer avec le backend en production. La variable `CORS_ORIGINS` sera configurée sur Render à l'exercice 7.
+> ⚠️ **Important** : Le middleware CORS est essentiel pour que le frontend puisse communiquer avec le backend en production. La variable `CORS_ORIGINS` sera configurée sur Render à l'exercice 7.
 
 **Étape 4 : Modifier la classe Task existante**
 
@@ -336,23 +339,35 @@ class Task(BaseModel):
 
 **Étape 5 : Modifier les endpoints**
 
-Pour chaque endpoint, ajoutez `db: Session = Depends(get_db)` comme paramètre :
+Pour chaque endpoint, ajoutez `db: Session = Depends(get_db)` comme paramètre.
+
+**Exemple simple avec health check :**
 
 ```python
 # ⚠️ AVANT (ne fonctionne plus)
-@app.get("/tasks")
-async def get_tasks():
-    return list(tasks_db.values())
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "tasks_count": len(tasks_db)}
 
-# ✅ APRÈS (version simple)
-@app.get("/tasks", response_model=List[Task])
-async def get_tasks(db: Session = Depends(get_db)):
-    return db.query(TaskModel).all()
+# ✅ APRÈS (avec SQLAlchemy)
+@app.get("/health")
+async def health_check(db: Session = Depends(get_db)):
+    """Health check with database status."""
+    try:
+        db.execute(text("SELECT 1"))
+        tasks_count = db.query(TaskModel).count()
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "tasks_count": tasks_count
+        }
+    except Exception as e:
+        return {"status": "unhealthy", "database": str(e)}
 ```
 
 > ⚠️ **Attention** : `db: Session = Depends(get_db)` doit être dans les **paramètres** de la fonction, pas dans le corps !
 
-**Exemple complet avec filtres :**
+**Exemple complet avec GET /tasks :**
 
 ```python
 @app.get("/tasks", response_model=List[Task])
@@ -402,28 +417,6 @@ Adaptez chaque endpoint selon ce tableau :
 >
 > **Indice POST /tasks** : Créez un `TaskModel` (pas `Task`) avec `id=str(uuid.uuid4())` au lieu de `get_next_id()`
 
-**Étape 6 : Améliorer le health check**
-
-Modifiez `/health` pour vérifier la connexion à la base de données :
-
-```python
-@app.get("/health")
-async def health_check(db: Session = Depends(get_db)):
-    try:
-        db.execute(text("SELECT 1"))
-        db_status = "connected"
-    except Exception:
-        db_status = "disconnected"
-
-    tasks_count = db.query(TaskModel).count()
-
-    return {
-        "status": "healthy",
-        "database": db_status,
-        "tasks_count": tasks_count
-    }
-```
-
 ### 💡 Points clés à retenir
 
 | Concept | Explication |
@@ -462,25 +455,20 @@ Les tests utilisent actuellement `clear_tasks()` qui n'existe plus. Nous devons 
 
 ### Instructions
 
-**Étape 1 : Ajouter les imports**
-
-Ouvrez `backend/tests/conftest.py` et ajoutez :
+Remplacez le contenu de `backend/tests/conftest.py` par :
 
 ```python
+import pytest
 import tempfile
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from src.app import app
 from src.database import Base, get_db
 from src.models import TaskModel
-```
 
-**Étape 2 : Configurer la base de test**
-
-Créez une base SQLite temporaire :
-
-```python
 TEST_DB_FILE = tempfile.mktemp(suffix=".db")
 TEST_DATABASE_URL = f"sqlite:///{TEST_DB_FILE}"
 
@@ -491,13 +479,8 @@ test_engine = create_engine(
 )
 
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-```
 
-**Étape 3 : Créer les fixtures**
 
-Ajoutez ces 3 fixtures dans `conftest.py` :
-
-```python
 @pytest.fixture(scope="session")
 def setup_test_database():
     """Crée les tables une seule fois pour tous les tests."""
@@ -532,11 +515,6 @@ def client(setup_test_database):
 ```
 
 > 💡 **`dependency_overrides`** permet de remplacer `get_db` par une version qui utilise la base de test au lieu de la vraie base.
-
-**Étape 4 : Supprimer l'ancien code**
-
-- ❌ `from src.app import clear_tasks`
-- ❌ Les appels à `clear_tasks()` dans les fixtures
 
 ### ✅ Checkpoint
 
