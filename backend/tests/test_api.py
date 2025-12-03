@@ -16,6 +16,38 @@ import pytest
 # PARTIE 1 : TESTS EXEMPLES (Apprenez de ceux-ci !)
 # =============================================================================
 
+import pytest
+
+@pytest.mark.e2e
+def test_complete_task_lifecycle(client):
+    """Test E2E : Créer plusieurs tâches et les lister."""
+    # Créer la première tâche
+    response = client.post("/tasks", json={
+        "title": "Tâche E2E 1",
+        "description": "Première tâche"
+    })
+    assert response.status_code == 201
+    task1_id = response.json()["id"]
+
+    # Créer la deuxième tâche
+    response = client.post("/tasks", json={
+        "title": "Tâche E2E 2",
+        "description": "Deuxième tâche"
+    })
+    assert response.status_code == 201
+    task2_id = response.json()["id"]
+
+    # Lister toutes les tâches
+    response = client.get("/tasks")
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) >= 2
+
+    # Vérifier que nos deux tâches sont dans la liste
+    task_ids = [task["id"] for task in tasks]
+    assert task1_id in task_ids
+    assert task2_id in task_ids
+
 def test_root_endpoint(client):
     """
     EXEMPLE : Tester un point de terminaison GET simple.
@@ -38,7 +70,7 @@ def test_health_check(client):
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    assert response.json()["status"] == "healthy" # Erreur à introduire au tp2 : "BROKEN"
 
 
 def test_create_task(client):
@@ -130,26 +162,43 @@ def test_delete_task(client):
     Astuce : Regardez test_get_task_by_id pour voir comment créer et obtenir l'ID
     """
     # TODO : Écrivez votre test ici !
-    pass
+    # 1)
+    new_task = {
+        "title": "Supprimer une tâche",
+        "description": "Suppression d'une tâche"}
+    create_response = client.post("/tasks", json=new_task)
+    # 2)
+    task_id = create_response.json()["id"]
+    # 3)
+    response=client.delete(f"/tasks/{task_id}")
+    # 4)
+    assert response.status_code == 204
+    # 5)
+    get_response = client.get(f"/tasks/{task_id}")
+
+    print(get_response)
+    assert get_response.status_code == 404
+
+def test_delete_nonexistent_task_returns_404(client):
+    """Deleting a task that doesn't exist should return 404."""
+    # TODO: Votre code ici
+    # 1. Essayer de supprimer une tâche avec un ID qui n'existe pas (ex: 9999)
+    # 2. Vérifier que ça retourne 404
+    # 3. Vérifier le message d'erreur contient "not found"
+
+    # 1)
+    response=client.delete(f"/tasks/{9999}")
+    # 2)
+    assert response.status_code == 404
+    # 3)
+    # response.detail
+   
 
 
 # EXERCICE 2 : Écrire un test pour METTRE À JOUR une tâche
 # Pattern : Créer → Mettre à jour → Vérifier les changements
-def test_update_task(client):
-    """
-    VOTRE TÂCHE : Écrire un test qui met à jour le titre d'une tâche.
 
-    Étapes :
-    1. Créer une tâche avec le titre "Titre Original"
-    2. Obtenir son ID
-    3. Envoyer une requête PUT : client.put(f"/tasks/{task_id}", json={"title": "Nouveau Titre"})
-    4. Vérifier que le code de statut est 200
-    5. Vérifier que la réponse contient le nouveau titre
 
-    Astuce : Les requêtes PUT sont comme les POST, mais elles modifient des données existantes
-    """
-    # TODO : Écrivez votre test ici !
-    pass
 
 
 # EXERCICE 3 : Tester la validation - un titre vide devrait échouer
@@ -180,7 +229,15 @@ def test_update_task_with_invalid_priority(client):
     Rappel : Les priorités valides sont "low", "medium", "high" (voir TaskPriority dans app.py)
     """
     # TODO : Écrivez votre test ici !
-    pass
+    # 1)
+    new_task = {
+        "title": "Titre original"}
+    create_response = client.post("/tasks", json=new_task)
+    task_id = create_response.json()["id"]
+    # 2)
+    response=client.put(f"/tasks/{task_id}", json={"priority": "urgent"})
+    # 3)
+    assert response.status_code == 422
 
 
 # EXERCICE 5 : Tester l'erreur 404
@@ -243,7 +300,6 @@ def test_task_lifecycle(client):
     # TODO : Écrivez votre test ici !
     pass
 
-
 # =============================================================================
 # ASTUCES & CONSEILS
 # =============================================================================
@@ -291,3 +347,11 @@ RAPPELEZ-VOUS :
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+
+
+
+
+
+
