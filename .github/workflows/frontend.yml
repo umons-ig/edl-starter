@@ -1,0 +1,56 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request : 
+    branches : [main]
+  workflow_call: 
+
+jobs:
+  test_and_build:
+    runs-on: ubuntu-latest
+    
+    # Le bloc steps doit être sous le job 'test_and_build'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- Configuration Python (si vous le souhaitez dans ce même fichier) ---
+      - name: Setup Python 3.11 and Cache
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install UV
+        run: pip install uv
+        
+      - name: Install/Sync UV Dependencies (Backend)
+        working-directory: ./backend
+        run: uv sync
+
+      # --- Configuration Node.js (Le problème se trouvait ici ou avant) ---
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      # --- Tests et Build ---
+      - name: Run Frontend Tests (Node.js/npm)
+        working-directory: ./frontend
+        run: npm test
+        
+      - name: Build Frontend Application
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Run Backend Tests (Python/uv)
+        working-directory: ./backend
+        run: uv run pytest

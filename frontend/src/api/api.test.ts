@@ -80,11 +80,30 @@ describe('API Module', () => {
    *
    * Indice: Regardez le test "creates a new task" ci-dessus pour vous inspirer
    */
+
+
   it.todo('deletes a task', async () => {
     // TODO: Votre code ici
     // 1. Mocker fetch pour retourner { ok: true, status: 204 }
     // 2. Appeler await api.deleteTask(1)
     // 3. Vérifier que fetch a été appelé avec '/tasks/1' et method: 'DELETE'
+
+
+    const mockfetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 204,
+        json: () => Promise.resolve({ ...deletedTask, id: 1 }),
+      })
+    );
+
+    const response = await api.deleteTask(1);
+
+    expect(response).toBe(204);
+
+
+
+
   });
 
   /**
