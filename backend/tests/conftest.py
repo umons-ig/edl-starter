@@ -1,17 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
-from src.app import app, clear_tasks
+from src.app import app
 
 
-@pytest.fixture(autouse=True)
-def clean_tasks():
-    """
-    Clear all tasks before each test.
-    This ensures tests don't interfere with each other.
-    """
-    clear_tasks()
-    yield
-    clear_tasks()
 
 
 @pytest.fixture
