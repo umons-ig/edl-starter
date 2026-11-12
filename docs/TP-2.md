@@ -124,11 +124,9 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
 
 ### Instructions
 
-1. **Créez la structure des workflows :**
+1. **Repérez le dossier des workflows.** Le dossier `.github/workflows/` existe déjà **à la racine du dépôt** (il contient `docs.yml`, qui sert à publier cette documentation : ne le modifiez pas).
 
-   ```bash
-   mkdir -p .github/workflows
-   ```
+   ⚠️ Créez vos workflows dans ce dossier, **pas** dans `backend/` ni dans `frontend/` : GitHub ne lit que `.github/workflows/` à la racine, et ignore sans prévenir un workflow placé ailleurs.
 
 2. **Créez le fichier `.github/workflows/backend.yml` avec ce squelette :**
 
@@ -159,7 +157,7 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
 3. **Complétez les TODO en vous aidant de la documentation**
 
    **📖 Documentation utile :**
-   - [actions/setup-python](https://github.com/actions/setup-python#caching-packages-dependencies) : Pour Setup Python avec cache
+   - [actions/setup-python](https://github.com/actions/setup-python) : la page commence par un **exemple d'utilisation** (`uses:` suivi de `with:`). Partez de cet exemple, puis ajoutez le cache (section *Caching packages dependencies*).
 
    **💡 Indices :**
    - **Setup Python** : Utilisez `actions/setup-python@v7` avec les paramètres :
@@ -184,13 +182,15 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
    uv run pytest -v --cov
    ```
 
-6. **Poussez et vérifiez sur GitHub Actions :**
+5. **Poussez et vérifiez sur GitHub Actions :**
 
    ```bash
    git add .github/workflows/backend.yml
    git commit -m "ci: add backend workflow"
    git push origin main
    ```
+
+💡 **Erreur « Invalid workflow file » ?** Le fichier YAML est mal écrit, presque toujours à cause de l'**indentation** (YAML utilise des espaces, jamais de tabulations, et `with:` doit être décalé sous `uses:`). Le workflow ne se lance même pas : cliquez sur l'erreur dans l'onglet Actions pour voir la ligne fautive. L'extension VS Code **GitHub Actions** souligne ces erreurs avant même de pousser.
 
 ### ✅ Résultat attendu
 
@@ -262,6 +262,8 @@ Créer un workflow qui teste et build le frontend automatiquement.
    npm test -- --run
    npm run build
    ```
+
+   💡 `--run` lance les tests **une seule fois**. Sans lui, `npm test` reste ouvert en mode surveillance (pratique en développement, mais la CI attend que la commande se termine).
 
 4. **Poussez et vérifiez :**
 
@@ -390,7 +392,7 @@ Empêcher les merges sur `main` si les tests échouent. Vous allez créer une br
 
 1. **Sur GitHub, allez dans votre repository → Settings → Branches**
 
-2. **Cliquez sur "Add branch protection rule"**
+2. **Cliquez sur "Add classic branch protection rule"** (et non sur "Add branch ruleset", qui est une autre interface)
 
 3. **Configurez ces paramètres :**
 
@@ -863,6 +865,11 @@ Vous savez maintenant :
 ---
 
 ## 🐛 Erreurs Fréquentes
+
+### ❌ « Invalid workflow file » ou le workflow n'apparaît pas
+
+**Causes :** YAML mal indenté (tabulation, `with:` pas décalé sous `uses:`), ou fichier placé ailleurs que dans `.github/workflows/` à la racine du dépôt
+**Solution :** Cliquez sur l'erreur dans l'onglet Actions pour voir la ligne fautive ; vérifiez l'emplacement du fichier
 
 ### ❌ `uv: command not found`
 
