@@ -44,13 +44,15 @@ Ajouter SQLAlchemy et le driver PostgreSQL au backend.
 
 ```bash
 cd backend
-uv add sqlalchemy psycopg2-binary
+uv add sqlalchemy "psycopg[binary]"
 ```
 
 ### 💡 Ce que font ces packages
 
 - **`sqlalchemy`** : ORM (Object-Relational Mapping) pour Python - permet de manipuler la base de données avec des objets Python
-- **`psycopg2-binary`** : Driver PostgreSQL - permet à Python de se connecter à PostgreSQL
+- **`psycopg[binary]`** : Driver PostgreSQL (psycopg 3) - permet à Python de se connecter à PostgreSQL. C'est le driver que SQLAlchemy 2.1 utilise par défaut pour une URL `postgresql://`
+
+> ⚠️ N'installez pas `psycopg2-binary` : avec SQLAlchemy 2.1, une URL `postgresql://` cherche `psycopg` (version 3), et le serveur plante au démarrage avec `No module named 'psycopg'`.
 
 ---
 
@@ -320,6 +322,8 @@ class Task(BaseModel):
 **Étape 5 : Modifier les endpoints**
 
 Pour chaque endpoint, ajoutez `db: Session = Depends(get_db)` comme paramètre.
+
+Dans les trois routes `/tasks/{task_id}` (GET, PUT et DELETE), remplacez aussi `task_id: int` par `task_id: str` : les identifiants sont maintenant des UUID, donc du texte. Sinon, FastAPI refuse la requête avec une erreur 422.
 
 **Exemple simple avec health check :**
 
@@ -802,6 +806,7 @@ Pour l'utiliser : placez-le à la racine du repository sous le nom `render.yaml`
 | `password authentication failed` (logs backend ou en local) | Mauvais mot de passe dans `DATABASE_URL`, ou crochets `[ ]` laissés autour | Recopiez l'URL depuis Supabase et remplacez `[YOUR-PASSWORD]` par le mot de passe seul |
 | `Network is unreachable` ou timeout vers `db.xxx.supabase.co` | URL "Direct connection" (IPv6) | Reprenez l'URL en mode **Session pooler** (host `pooler.supabase.com`) |
 | Le mot de passe contient `@`, `#`, `/`… | Caractères spéciaux dans l'URL | Supabase → **Project Settings** → **Database** → **Reset database password** avec lettres et chiffres uniquement |
+| `ModuleNotFoundError: No module named 'psycopg'` (en local ou sur Render) | `psycopg2-binary` installé à la place de `psycopg` | `uv remove psycopg2-binary`, puis `uv add "psycopg[binary]"`, commit, push |
 | `ModuleNotFoundError: No module named 'sqlalchemy'` sur Render | `pyproject.toml` / `uv.lock` pas poussés après `uv add` | `git add backend/pyproject.toml backend/uv.lock`, commit, push |
 | Build backend : fichier introuvable / `src.app` introuvable | **Root Directory** vide | Settings → Root Directory = `backend` |
 | Frontend : "Erreur de Connexion" au premier chargement | Backend en veille (offre gratuite) | Attendez ~1 minute et rechargez |
@@ -816,7 +821,7 @@ Pour l'utiliser : placez-le à la racine du repository sous le nom `render.yaml`
 
 Félicitations ! Vous avez maintenant :
 
-✅ **Exercice 1** : Installé SQLAlchemy et psycopg2
+✅ **Exercice 1** : Installé SQLAlchemy et psycopg
 ✅ **Exercice 2** : Configuré la connexion à la base de données
 ✅ **Exercice 3** : Créé le modèle ORM TaskModel
 ✅ **Exercice 4** : Migré app.py vers PostgreSQL
