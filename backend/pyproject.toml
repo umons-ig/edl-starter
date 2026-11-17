@@ -8,7 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.54.0",
     "pydantic>=2.14.0",
     "httpx2>=2.16.0",  # Required by FastAPI TestClient
-    # sqlalchemy and psycopg2-binary will be added in TP 3
+    # sqlalchemy and psycopg[binary] will be added in TP 3
 ]
 
 [build-system]

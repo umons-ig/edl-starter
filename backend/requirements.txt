@@ -7,7 +7,7 @@ httpx2==2.16.0
 
 # Base de données (TP 3)
 sqlalchemy==2.1.6
-psycopg2-binary==2.9.13
+psycopg[binary]==3.3.9
 
 # Tests
 pytest==9.2.0

@@ -120,7 +120,7 @@ jobs:                       # 3️⃣ Les tâches à faire
 
 ### Objectif
 
-Créer un workflow qui teste automatiquement le backend à chaque push.
+Créer un workflow qui teste automatiquement le backend à chaque push sur `main` et à chaque pull request vers `main`.
 
 ### Instructions
 
@@ -135,6 +135,8 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
 
    on:
      push:
+       branches: [main]
+     pull_request:
        branches: [main]
 
    jobs:
@@ -153,6 +155,8 @@ Créer un workflow qui teste automatiquement le backend à chaque push.
 
          # TODO : Lancez les tests
    ```
+
+   💡 **Pourquoi `pull_request` ?** Sans lui, le workflow ne tourne pas sur une pull request. À l'exercice 4, la protection de branche attendrait alors des tests qui ne se lancent jamais, et le merge resterait bloqué.
 
 3. **Complétez les TODO en vous aidant de la documentation**
 
@@ -223,6 +227,8 @@ Créer un workflow qui teste et build le frontend automatiquement.
 
    on:
      push:
+       branches: [main]
+     pull_request:
        branches: [main]
 
    jobs:
@@ -549,7 +555,7 @@ Créer un pipeline CI global qui orchestre backend et frontend.
      workflow_call:  # ✨ Ce workflow sera lancé par le pipeline
    ```
 
-   💡 **Pourquoi retirer `push` ?** Sinon, chaque push lancerait les tests **deux fois** : une fois par `backend.yml` lui-même, une fois par le pipeline. Désormais, c'est le pipeline qui décide quand lancer les tests.
+   💡 **Pourquoi retirer `push` et `pull_request` ?** Sinon, chaque push lancerait les tests **deux fois** : une fois par `backend.yml` lui-même, une fois par le pipeline. Désormais, c'est le pipeline qui décide quand lancer les tests.
 
 2. **Créez `.github/workflows/ci-pipeline.yml` :**
 
@@ -574,11 +580,18 @@ Créer un pipeline CI global qui orchestre backend et frontend.
      summary:
        name: All Tests Passed
        needs: [backend, frontend]
+       if: always()  # ✨ Tourne aussi quand backend ou frontend échoue
        runs-on: ubuntu-latest
        steps:
+         - name: ❌ Un job a échoué
+           if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+           run: exit 1
+
          - name: 🎉 Success
            run: echo "🎉 Tous les tests sont passés !"
    ```
+
+   💡 **Pourquoi `if: always()` ?** Sans lui, `summary` est **sauté** dès que backend ou frontend échoue. Or GitHub compte un job sauté comme réussi : une PR aux tests rouges pourrait être mergée. Avec `if: always()`, `summary` tourne toujours et échoue si un des jobs a échoué.
 
 3. **Poussez et observez :**
 
@@ -606,7 +619,7 @@ Dans l'onglet **Actions**, il n'y a plus qu'**un seul workflow** par push, avec 
   └─ All Tests Passed
 ```
 
-Le job `summary` (All Tests Passed) attend que backend **ET** frontend soient terminés avant de s'exécuter.
+Le job `summary` (All Tests Passed) attend que backend **ET** frontend soient terminés avant de s'exécuter. Il est vert seulement si les deux ont réussi.
 
 ---
 
