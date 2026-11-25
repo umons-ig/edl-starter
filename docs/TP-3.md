@@ -527,13 +527,17 @@ Créer une base PostgreSQL gratuite sur Supabase, puis vérifier **en local** qu
 ### Étape 1 : Créer un compte et un projet
 
 1. Allez sur <https://supabase.com> → **"Start your project"** → inscrivez-vous avec **GitHub**
-2. Cliquez **"New project"** et configurez :
-    - **Name** : `taskflow`
-    - **Database Password** : un mot de passe composé **uniquement de lettres et de chiffres** (⚠️ **notez-le !**)
-    - **Region** : `West EU (Ireland)`
-3. Cliquez **"Create new project"** et attendez 1-2 minutes
+2. Nouveau compte : Supabase demande d'abord de créer une **organisation**. Gardez le nom proposé et le plan **Free**, puis **"Create organization"**.
+3. Dans le formulaire **"Create a new project"**, configurez :
+    - **Project name** : `taskflow`
+    - **Database password** : un mot de passe composé **uniquement de lettres et de chiffres** (⚠️ **notez-le !**)
+    - **Region** : Supabase propose `Europe`. Cliquez **"Need a specific region?"** et choisissez `West EU (Ireland)`
+    - **Data access** : décochez **"Enable Data API"** (voir l'encadré ci-dessous)
+4. Cliquez **"Create new project"** et attendez 1-2 minutes
 
 > ⚠️ **Pourquoi seulement des lettres et des chiffres ?** Le mot de passe va être placé dans une URL. Les caractères comme `@ # / : ? %` ont un sens spécial dans une URL et cassent la connexion.
+
+> 🔒 **Pourquoi décocher "Enable Data API" ?** Cette option ouvre vos tables à une API web publique de Supabase, sans contrôle d'accès : n'importe qui ayant la clé publique du projet pourrait lire et modifier vos tâches. Notre backend se connecte directement à PostgreSQL, il n'en a pas besoin. Si vous l'avez laissée cochée, le Table Editor marque la table `tasks` comme **UNRESTRICTED**.
 
 ![Supabase Home](img/supabase.png)
 
@@ -543,15 +547,15 @@ Créer une base PostgreSQL gratuite sur Supabase, puis vérifier **en local** qu
 
     ![Supabase Connect](img/connect.png)
 
-2. Dans l'onglet **Connection String** :
+2. Choisissez la carte **Direct** (« Connection string »), puis :
+    - **Connection Method** : cochez `Session pooler` (⚠️ pas "Direct connection", cochée par défaut)
     - **Type** : `URI`
-    - **Method** : `Session pooler` (⚠️ pas "Direct connection")
-3. Copiez l'URL et remplacez `[YOUR-PASSWORD]` par votre mot de passe (sans les crochets)
+3. Copiez l'URL et remplacez `[YOUR-DATABASE-PASSWORD]` par votre mot de passe (sans les crochets)
 
-L'URL ressemble à :
+L'URL ressemble à (le début de l'hôte, `aws-0` ou `aws-1`, dépend du projet) :
 
 ```text
-postgresql://postgres.abcdefghijkl:MonMotDePasse123@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+postgresql://postgres.abcdefghijkl:MonMotDePasse123@aws-1-eu-west-1.pooler.supabase.com:5432/postgres
 ```
 
 > 💡 **Pourquoi "Session pooler" ?** Render ne parle qu'en IPv4, alors que la connexion directe de Supabase demande l'IPv6. Le pooler fait le pont.
@@ -623,7 +627,8 @@ Recopiez ce tableau dans un fichier texte et complétez-le au fur et à mesure :
     git push origin main
     ```
 
-3. Créez un compte sur <https://render.com> avec **GitHub** et autorisez l'accès à votre repository
+3. Créez un compte sur <https://render.com> avec **GitHub**
+4. Donnez à Render l'accès à votre repository : si votre repository n'apparaît pas dans la liste à l'étape 1, installez l'application Render sur GitHub. Ouvrez <https://github.com/apps/render/installations/new>, choisissez **votre compte**, puis **"Only select repositories"** → votre repository du TP → **"Install"**
 
 ### Étape 1 : Déployer le Backend
 
@@ -639,9 +644,11 @@ Recopiez ce tableau dans un fichier texte et complétez-le au fur et à mesure :
     | **Runtime** | `Python 3` |
     | **Build Command** | `pip install uv && uv sync` |
     | **Start Command** | `uv run uvicorn src.app:app --host 0.0.0.0 --port $PORT` |
-    | **Instance Type** | `Free` |
+    | **Instance Type** (section **Compute**) | `Free` (0 $/month) |
 
     > 💡 Laissez `$PORT` tel quel : Render le remplace lui-même.
+
+    > ⚠️ Render pré-remplit la **Build Command** avec `pip install -r requirements.txt` : remplacez-la. Et il **pré-coche une instance payante** (7 $/mois) : descendez jusqu'à **Compute** et choisissez **Free**.
 
 3. Dans **Environment Variables**, ajoutez **une seule** variable pour l'instant :
 
@@ -649,7 +656,7 @@ Recopiez ce tableau dans un fichier texte et complétez-le au fur et à mesure :
     |------|-------|
     | `DATABASE_URL` | Votre URL Supabase (exercice 6) |
 
-4. Cliquez **"Create Web Service"** et suivez les logs. Attendez le statut **Live** (3-5 min).
+4. Vérifiez une dernière fois que l'offre affichée en bas de page est **$0 / month**, puis cliquez **"Deploy web service"** et suivez les logs. Attendez le statut **Live** (3-5 min).
 5. Copiez l'**URL du backend** affichée en haut de la page (ex : `https://taskflow-backend-x7k2.onrender.com`) dans votre tableau.
 6. Vérifiez : ouvrez `<URL du backend>/health` dans le navigateur → `"database": "connected"`.
 
@@ -672,7 +679,7 @@ Recopiez ce tableau dans un fichier texte et complétez-le au fur et à mesure :
     |------|-------|
     | `VITE_API_URL` | **Votre** URL du backend (étape 1) |
 
-4. Cliquez **"Create Static Site"**, attendez **Live**, puis copiez l'**URL du frontend** dans votre tableau.
+4. Cliquez **"Deploy Static Site"**, attendez **Live**, puis copiez l'**URL du frontend** dans votre tableau.
 
 > ⚠️ **`VITE_API_URL` est lue au moment du build**, puis écrite "en dur" dans les fichiers JavaScript. Si vous la modifiez après coup, il faut **reconstruire** le frontend : **Manual Deploy** → **Deploy latest commit**.
 
@@ -680,13 +687,13 @@ Recopiez ce tableau dans un fichier texte et complétez-le au fur et à mesure :
 
 Par sécurité, le navigateur refuse qu'une page d'un site (le frontend) appelle un autre site (le backend), sauf si le backend l'autorise. C'est le rôle de `CORS_ORIGINS`.
 
-1. Dashboard → **taskflow-backend** → **Environment** → ajoutez :
+1. Dashboard → **taskflow-backend** → **Environment** → **"Edit"** → **"Add variable"** :
 
     | Name | Value |
     |------|-------|
     | `CORS_ORIGINS` | **Votre** URL du frontend (étape 2) |
 
-2. **"Save Changes"** → le backend redémarre automatiquement.
+2. **"Save, rebuild, and deploy"** → le backend est redéployé avec la nouvelle variable (1-2 min).
 
 ### Étape 4 : Ouvrir l'Application
 
@@ -732,7 +739,7 @@ Faire en sorte que chaque push sur `main` soit **testé par GitHub Actions (TP 2
 
 ### Instructions
 
-1. Sur Render → **taskflow-backend** → **Settings** → **Auto-Deploy** : choisissez **"After CI Checks Pass"**. Faites de même pour **taskflow-frontend**.
+1. Sur Render → **taskflow-backend** → **Settings** → section **Deploy** → **Auto-Deploy** → **"Edit"** : choisissez **"After CI Checks Pass"**, puis **"Save changes"**. Faites de même pour **taskflow-frontend**.
 2. Modifiez le message de bienvenue dans `backend/src/app.py` :
 
     ```python
@@ -808,7 +815,7 @@ Pour l'utiliser : placez-le à la racine du repository sous le nom `render.yaml`
 
 | Symptôme | Cause probable | Solution |
 |----------|----------------|----------|
-| `password authentication failed` (logs backend ou en local) | Mauvais mot de passe dans `DATABASE_URL`, ou crochets `[ ]` laissés autour | Recopiez l'URL depuis Supabase et remplacez `[YOUR-PASSWORD]` par le mot de passe seul |
+| `password authentication failed` (logs backend ou en local) | Mauvais mot de passe dans `DATABASE_URL`, ou crochets `[ ]` laissés autour | Recopiez l'URL depuis Supabase et remplacez `[YOUR-DATABASE-PASSWORD]` par le mot de passe seul |
 | `Network is unreachable` ou timeout vers `db.xxx.supabase.co` | URL "Direct connection" (IPv6) | Reprenez l'URL en mode **Session pooler** (host `pooler.supabase.com`) |
 | Le mot de passe contient `@`, `#`, `/`… | Caractères spéciaux dans l'URL | Supabase → **Project Settings** → **Database** → **Reset database password** avec lettres et chiffres uniquement |
 | `ModuleNotFoundError: No module named 'psycopg'` (en local ou sur Render) | `psycopg2-binary` installé à la place de `psycopg` | `uv remove psycopg2-binary`, puis `uv add "psycopg[binary]"`, commit, push |
