@@ -1,8 +1,10 @@
 # 🚀 TP 3 : Base de Données et Déploiement en Production
 
-## 🎯 Objectifs de l'Atelier
+**Point de départ :** votre dépôt du TP 2 (votre fork), avec vos tests et votre CI. On continue dans le même dépôt : à la fin du TP, c'est **votre** application qui sera en ligne.
 
-À la fin de cet atelier, vous aurez :
+## 🎯 Objectifs du TP
+
+À la fin de ce TP, vous aurez :
 
 1. ✅ Migré le backend vers **PostgreSQL** avec SQLAlchemy ORM
 2. ✅ Créé une base PostgreSQL gratuite sur **Supabase**
@@ -236,7 +238,7 @@ def get_next_id() -> int:
 def clear_tasks():
     ...
 
-# ⚠️ À MODIFIER : Le health check (sera réécrit à l'étape 6)
+# ⚠️ À MODIFIER : Le health check (sera réécrit à l'étape 5)
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "tasks_count": len(tasks_db)}
@@ -444,8 +446,10 @@ Les tests utilisent actuellement `clear_tasks()` qui n'existe plus. Nous devons 
 Remplacez le contenu de `backend/tests/conftest.py` par :
 
 ```python
-import pytest
+import logging
 import tempfile
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -454,6 +458,9 @@ from sqlalchemy.pool import StaticPool
 from src.app import app
 from src.database import Base, get_db
 from src.models import TaskModel
+
+# N'affiche pas chaque requête HTTP du client de test sous les tests en échec
+logging.getLogger("httpx2").setLevel(logging.WARNING)
 
 TEST_DB_FILE = tempfile.mktemp(suffix=".db")
 TEST_DATABASE_URL = f"sqlite:///{TEST_DB_FILE}"
@@ -586,6 +593,8 @@ Ouvrez <http://localhost:8000/health>. Vous devez voir :
 ```
 
 Créez une tâche via <http://localhost:8000/docs>, puis ouvrez **Table Editor** dans Supabase : la table `tasks` contient votre tâche. 🎉
+
+> 💡 Dans le Table Editor, le statut et la priorité apparaissent en majuscules (`TODO`, `MEDIUM`) : SQLAlchemy enregistre le **nom** de l'énumération. L'API, elle, renvoie toujours `todo` et `medium`.
 
 ❌ **Ça ne marche pas ?** Voir le tableau [Problèmes fréquents](#problemes-frequents) en fin de TP. Ne passez pas à la suite avant d'avoir `"database": "connected"`.
 
